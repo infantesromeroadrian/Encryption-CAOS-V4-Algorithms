@@ -1,5 +1,6 @@
 /* Variables */
 :root {
+    /* Modo claro (predeterminado) */
     --primary-color: #4a6fa5;
     --primary-dark: #3a5a8c;
     --secondary-color: #6c757d;
@@ -17,6 +18,19 @@
     --border-radius: 8px;
 }
 
+/* Modo oscuro */
+[data-theme="dark"] {
+    --primary-color: #5a8dd6;
+    --primary-dark: #4a7bc0;
+    --secondary-color: #9ca5ad;
+    --body-bg: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #444444;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --light-color: #2a2a2a;
+}
+
 /* Reset y estilos base */
 * {
     margin: 0;
@@ -29,6 +43,7 @@ body {
     background-color: var(--body-bg);
     color: var(--text-color);
     line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .container {
@@ -43,6 +58,7 @@ header {
     margin-bottom: 30px;
     padding: 20px 0;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
 }
 
 header h1 {
@@ -54,6 +70,29 @@ header p {
     color: var(--secondary-color);
 }
 
+/* Botón de cambio de tema */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: background-color 0.3s;
+}
+
+.theme-toggle:hover {
+    background: var(--primary-dark);
+}
+
 /* Tarjetas */
 .card {
     background-color: var(--card-bg);
@@ -61,6 +100,7 @@ header p {
     box-shadow: var(--shadow);
     padding: 20px;
     margin-bottom: 20px;
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 /* Formularios */
@@ -82,6 +122,9 @@ header p {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
 
 .form-group small {
@@ -224,6 +267,7 @@ header p {
     padding: 10px;
     background-color: var(--light-color);
     border-radius: var(--border-radius);
+    transition: background-color 0.3s;
 }
 
 #current-user {
@@ -249,22 +293,26 @@ header p {
 .encrypted-container {
     text-align: center;
     padding: 20px;
-    background-color: rgba(74, 111, 165, 0.1);
+    background-color: var(--light-color);
     border-radius: var(--border-radius);
     margin-bottom: 20px;
+    transition: background-color 0.3s;
 }
 
 .encrypted-container p {
-    margin-bottom: 15px;
-    font-weight: bold;
-    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: var(--secondary-color);
 }
 
 .decrypted-container {
     padding: 20px;
-    background-color: rgba(40, 167, 69, 0.1);
+    background-color: var(--light-color);
     border-radius: var(--border-radius);
     margin-bottom: 20px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    transition: background-color 0.3s;
 }
 
 /* Notificaciones */
@@ -272,15 +320,15 @@ header p {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    padding: 15px 20px;
-    border-radius: var(--border-radius);
-    background-color: var(--primary-color);
+    padding: 10px 20px;
+    background-color: var(--info-color);
     color: white;
-    box-shadow: var(--shadow);
-    z-index: 1000;
-    transition: transform 0.3s, opacity 0.3s;
+    border-radius: 4px;
     transform: translateY(100px);
     opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+    z-index: 1000;
+    max-width: 300px;
 }
 
 .notification.show {
@@ -298,19 +346,20 @@ header p {
 
 /* Utilidades */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Pie de página */
 footer {
     text-align: center;
+    margin-top: 50px;
     padding: 20px 0;
-    margin-top: 40px;
     color: var(--secondary-color);
     border-top: 1px solid var(--border-color);
+    font-size: 14px;
 }
 
-/* Responsive */
+/* Diseño responsivo */
 @media (max-width: 768px) {
     .app-grid {
         grid-template-columns: 1fr;

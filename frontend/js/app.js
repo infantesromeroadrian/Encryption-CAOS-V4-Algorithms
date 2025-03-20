@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const decryptedContentEl = document.getElementById('decrypted-content');
     const backBtnEl = document.getElementById('back-btn');
     const notificationEl = document.getElementById('notification');
+    const themeToggleBtn = document.getElementById('theme-toggle');
     
     // Función para mostrar notificaciones
     function showNotification(message, type = 'info') {
@@ -51,6 +52,36 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             notificationEl.className = 'notification hidden';
         }, 3000);
+    }
+    
+    // Función para cambiar el tema
+    function toggleTheme() {
+        const isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+        
+        if (isDarkTheme) {
+            // Cambiar a tema claro
+            document.body.removeAttribute('data-theme');
+            themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('theme', 'light');
+        } else {
+            // Cambiar a tema oscuro
+            document.body.setAttribute('data-theme', 'dark');
+            themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+    
+    // Inicializar el tema según las preferencias guardadas
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        
+        if (savedTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.body.removeAttribute('data-theme');
+            themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+        }
     }
     
     // Función para cambiar entre las pestañas de autenticación
@@ -384,6 +415,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showComposeView();
     });
     
+    // Event listener para el botón de cambio de tema
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    
     // Inicializar la aplicación
     initApp();
+    // Inicializar el tema
+    initTheme();
 }); 
