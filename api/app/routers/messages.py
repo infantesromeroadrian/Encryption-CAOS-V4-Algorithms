@@ -163,27 +163,46 @@ def read_message(
     
     # Descifrar el mensaje
     try:
-        # Descifrar la clave privada del usuario con su contraseña
-        private_key = decrypt_private_key(current_user.encrypted_private_key, password)
+        # Determinar quién debe descifrar el mensaje
+        decrypting_user = None
         
-        # Descifrar el mensaje
-        decrypted_content = hybrid_decrypt(
-            message.encrypted_content,
-            message.encrypted_aes_key,
-            message.iv,
-            private_key,
-        )
-        
-        # Obtener la clave pública del remitente
-        sender = db.query(User).filter(User.id == message.sender_id).first()
-        
-        # Verificar la firma del mensaje
-        is_valid = verify_signature(decrypted_content, message.signature, sender.public_key)
-        if not is_valid:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La firma del mensaje no es válida",
+        if message.recipient_id == current_user.id:
+            # Si el usuario actual es el destinatario, usa su clave privada para descifrar
+            private_key = decrypt_private_key(current_user.encrypted_private_key, password)
+            decrypted_content = hybrid_decrypt(
+                message.encrypted_content,
+                message.encrypted_aes_key,
+                message.iv,
+                private_key,
             )
+            # El remitente firmó el mensaje
+            sender = db.query(User).filter(User.id == message.sender_id).first()
+            public_key_for_verification = sender.public_key
+            
+        elif message.sender_id == current_user.id:
+            # Si el usuario actual es el remitente, necesita la clave pública del destinatario
+            recipient = db.query(User).filter(User.id == message.recipient_id).first()
+            
+            # El remitente no puede descifrar el mensaje porque fue cifrado con la clave pública del destinatario
+            # En su lugar, mostramos el texto original que el remitente escribió
+            # Por seguridad, el remitente debe proporcionar su contraseña para confirmar su identidad
+            decrypt_private_key(current_user.encrypted_private_key, password)  # Verificar contraseña
+            
+            # Buscar el contenido original en la firma
+            # Como el remitente firmó el mensaje con su clave privada, podemos verificar que él lo envió
+            decrypted_content = message_in.content if hasattr(message, 'original_content') else "Este es tu mensaje enviado. El contenido original está disponible solo para el destinatario."
+            
+            # El remitente firmó el mensaje (él mismo)
+            public_key_for_verification = current_user.public_key
+        
+        # Verificar la firma del mensaje (opcional para mensajes enviados por el usuario actual)
+        if message.recipient_id == current_user.id:
+            is_valid = verify_signature(decrypted_content, message.signature, public_key_for_verification)
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="La firma del mensaje no es válida",
+                )
         
         # Devolver el mensaje con el contenido descifrado
         return {
