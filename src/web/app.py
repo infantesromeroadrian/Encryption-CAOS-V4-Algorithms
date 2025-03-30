@@ -449,6 +449,12 @@ def custom():
             version = request.form.get('version', 'caos_v3')
             action = request.form.get('action', 'encrypt')
             
+            # Imprimir información de depuración
+            app.logger.info(f"Acción recibida: {action}")
+            app.logger.info(f"Versión: {version}")
+            app.logger.info(f"Texto de entrada: {text[:30]}..." if len(text) > 30 else f"Texto de entrada: {text}")
+            app.logger.info(f"Texto cifrado de entrada: {request.form.get('encrypted', '')[:30]}..." if len(request.form.get('encrypted', '')) > 30 else f"Texto cifrado de entrada: {request.form.get('encrypted', '')}")
+            
             if version == 'caos_v3':
                 encryptor = CaosEncryption(password)
             else:  # caos_v4
@@ -456,33 +462,82 @@ def custom():
             
             if action == 'encrypt':
                 # Encriptar texto
-                encrypted = encryptor.encrypt(text.encode('utf-8'))
-                if isinstance(encrypted, bytes):
-                    encrypted = base64.b64encode(encrypted).decode('utf-8')
-                result = {
-                    'success': True,
-                    'encrypted': encrypted,
-                    'original': text
-                }
+                try:
+                    app.logger.info(f"Intentando encriptar texto con {version} (longitud: {len(text)})")
+                    encrypted = encryptor.encrypt(text.encode('utf-8'))
+                    
+                    if isinstance(encrypted, bytes):
+                        # Registrar información sobre el binario antes de codificar a base64
+                        app.logger.info(f"Bytes encriptados generados: {len(encrypted)} bytes")
+                        encrypted = base64.b64encode(encrypted).decode('utf-8')
+                        app.logger.info(f"Texto encriptado en base64: {len(encrypted)} caracteres")
+                        
+                    result = {
+                        'success': True,
+                        'encrypted': encrypted,
+                        'original': text
+                    }
+                except Exception as e:
+                    app.logger.error(f"Error al encriptar: {str(e)}\n{traceback.format_exc()}")
+                    raise ValueError(f"Error al encriptar: {str(e)}")
             else:  # decrypt
                 # Desencriptar texto
                 encrypted = request.form.get('encrypted', '')
                 try:
-                    # Intentar decodificar base64
-                    encrypted_bytes = base64.b64decode(encrypted)
-                except:
-                    # Si falla, usar directamente
-                    encrypted_bytes = encrypted.encode('utf-8')
-                
-                decrypted = encryptor.decrypt(encrypted_bytes)
-                if isinstance(decrypted, bytes):
-                    decrypted = decrypted.decode('utf-8')
-                
-                result = {
-                    'success': True,
-                    'decrypted': decrypted,
-                    'encrypted': encrypted
-                }
+                    # Asegurar que tenemos una cadena base64 válida
+                    # Limpiar espacios en blanco que pueden haberse introducido al copiar/pegar
+                    encrypted = encrypted.strip()
+                    
+                    app.logger.info(f"Intentando descifrar texto: '{encrypted[:20]}...' (longitud: {len(encrypted)})")
+                    
+                    # Importante: Ignoramos el campo "text" para descifrar, solo usamos "encrypted"
+                    app.logger.info("Ignorando el campo 'text' para la operación de descifrado")
+                    
+                    try:
+                        # Intentar decodificar base64
+                        encrypted_bytes = base64.b64decode(encrypted)
+                        app.logger.info(f"Longitud después de decodificar base64: {len(encrypted_bytes)} bytes")
+                    except Exception as decode_error:
+                        app.logger.error(f"Error al decodificar base64: {str(decode_error)}")
+                        raise ValueError(f"El texto cifrado no es un formato base64 válido. Asegúrate de copiar todo el texto sin modificarlo.")
+                    
+                    # Ya no verificamos la longitud mínima, dejamos que el descifrador maneje cualquier error
+                    
+                    # Descifrar el mensaje
+                    decrypted = encryptor.decrypt(encrypted_bytes)
+                    
+                    # Decodificar correctamente a texto 
+                    if isinstance(decrypted, bytes):
+                        try:
+                            # Primero intentar decodificar como UTF-8 puro
+                            decrypted_text = decrypted.decode('utf-8')
+                            app.logger.info("Descifrado exitoso con codificación UTF-8 pura")
+                        except UnicodeDecodeError:
+                            # Si falla, intentar con reemplazo de caracteres inválidos
+                            decrypted_text = decrypted.decode('utf-8', errors='replace')
+                            app.logger.warning("Se usó reemplazo de caracteres al decodificar UTF-8")
+                    else:
+                        decrypted_text = str(decrypted)
+                    
+                    # Registrar información para depuración
+                    app.logger.info(f"Texto descifrado (longitud: {len(decrypted_text)}, primeros caracteres: '{decrypted_text[:30]}')")
+                    
+                    # Construir el resultado
+                    result = {
+                        'success': True,
+                        'decrypted': decrypted_text,
+                        'encrypted': encrypted
+                    }
+                    
+                    # Log de éxito
+                    app.logger.info(f"Descifrado completado exitosamente. Longitud del resultado: {len(decrypted_text)} caracteres")
+                    app.logger.info(f"Primeros 30 caracteres descifrados: '{decrypted_text[:30]}'")
+                    
+                    # Imprimir diccionario completo para depuración
+                    app.logger.info(f"Diccionario result completo: {result}")
+                except Exception as e:
+                    app.logger.error(f"Error al descifrar: {str(e)}\n{traceback.format_exc()}")
+                    raise ValueError(f"Error al descifrar: {str(e)}. Asegúrate de que el mensaje cifrado y la contraseña sean correctos.")
         except Exception as e:
             result = {
                 'success': False,

@@ -97,7 +97,16 @@
                             
                             <div class="mb-3">
                                 <label for="encrypted" class="form-label">Mensaje Cifrado (Base64)</label>
-                                <textarea class="form-control" id="encrypted" name="encrypted" rows="3">{{ encrypted or '' }}</textarea>
+                                <div class="input-group">
+                                    <textarea class="form-control" id="encrypted" name="encrypted" rows="3">{{ encrypted or '' }}</textarea>
+                                    <button class="btn btn-outline-secondary" type="button" id="copyEncryptedBtn" data-clipboard-target="#encrypted" title="Copiar texto cifrado">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> Para descifrar: Usa la misma contraseña que usaste para cifrar.
+                                    NO edites el texto cifrado o fallará el proceso de descifrado.
+                                </div>
                             </div>
                             
                             <div class="row mb-3">
@@ -105,19 +114,72 @@
                                     <button type="button" id="encryptBtn" class="btn btn-primary me-2">Cifrar</button>
                                     <button type="button" id="decryptBtn" class="btn btn-success">Descifrar</button>
                                 </div>
+                                <!-- Indicación visual del modo actual -->
+                                <div class="col-12 mt-2">
+                                    <div id="modeIndicator" class="small text-muted">
+                                        Modo actual: <span id="currentMode">Cifrar</span>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                         
                         {% if result %}
                         <div class="mt-4">
-                            <div class="alert {% if result.success %}alert-info{% else %}alert-danger{% endif %}">
-                                <h5>Resultado:</h5>
+                            <div class="alert {% if result.success %}{% if result.encrypted and not result.decrypted %}alert-primary{% else %}alert-success{% endif %}{% else %}alert-danger{% endif %}">
+                                <h5>Resultado de {% if result.encrypted and not result.decrypted %}Cifrado{% elif result.decrypted is defined %}Descifrado{% else %}Operación{% endif %}:</h5>
+                                <div class="small text-muted mb-2">
+                                    Debug: Campos disponibles en resultado - 
+                                    success: {% if result.success is defined %}sí{% else %}no{% endif %},
+                                    encrypted: {% if result.encrypted is defined %}sí{% else %}no{% endif %},
+                                    decrypted: {% if result.decrypted is defined %}sí{% else %}no{% endif %},
+                                    error: {% if result.error is defined %}sí{% else %}no{% endif %}
+                                </div>
                                 <div class="result-box">
                                     {% if result.success %}
-                                        {% if result.encrypted %}
-                                            <code id="resultText">Mensaje cifrado correctamente.</code>
-                                        {% elif result.decrypted %}
+                                        {% if result.decrypted is defined %}
                                             <code id="resultText">Mensaje descifrado: {{ result.decrypted }}</code>
+                                            <!-- Mostrar algunos datos de diagnóstico -->
+                                            <div class="small text-muted mt-2">
+                                                <details>
+                                                    <summary>Información de diagnóstico</summary>
+                                                    <div>Longitud del texto descifrado: {{ result.decrypted|length }} caracteres</div>
+                                                    <div>Primeros 20 caracteres: "{{ result.decrypted[:20] }}"</div>
+                                                    <div>¿El texto está vacío?: {{ result.decrypted == '' }}</div>
+                                                    {% if result.original_len is defined %}
+                                                    <div>Longitud original: {{ result.original_len }}</div>
+                                                    {% endif %}
+                                                </details>
+                                            </div>
+                                            <script>
+                                                // Actualizar directamente el campo de texto con el mensaje descifrado
+                                                document.getElementById('text').value = '{{ result.decrypted|e }}';
+                                                console.log("Texto descifrado copiado al campo de texto:", '{{ result.decrypted|e }}');
+                                            </script>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary" id="copyToTextBtn" type="button">
+                                                    <i class="fas fa-copy"></i> Copiar al campo Mensaje
+                                                </button>
+                                            </div>
+                                        {% elif result.encrypted %}
+                                            <code id="resultText">Mensaje cifrado correctamente</code>
+                                            <script>
+                                                // Actualizar automáticamente el campo de mensaje cifrado
+                                                document.getElementById('encrypted').value = '{{ result.encrypted }}';
+                                                // Almacenar el texto original para referencia
+                                                {% if result.original is defined %}
+                                                if (!sessionStorage.getItem('originalText')) {
+                                                    try {
+                                                        const originalText = JSON.parse('{{ result.original|tojson }}');
+                                                        sessionStorage.setItem('originalText', originalText);
+                                                    } catch (error) {
+                                                        console.error("Error al procesar texto original:", error);
+                                                        sessionStorage.setItem('originalText', '{{ result.original }}');
+                                                    }
+                                                }
+                                                {% endif %}
+                                                // Añadir un mensaje claro sobre el éxito sin incluir el texto cifrado completo
+                                                document.getElementById('resultText').textContent = 'Mensaje cifrado correctamente. El texto cifrado ya ha sido copiado al campo "Mensaje Cifrado".';
+                                            </script>
                                         {% endif %}
                                     {% else %}
                                         <code id="resultText">Error: {{ result.error }}</code>
@@ -235,33 +297,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar el plugin de copiado
+            // Inicializar el plugin de copiado para todos los botones con clipboard
             new ClipboardJS('.copy-btn');
+            new ClipboardJS('#copyEncryptedBtn');
             
             // Manejo de eventos para los botones
             document.getElementById('encryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Verificar que la contraseña no esté vacía
+                if (!document.getElementById('password').value.trim()) {
+                    alert('Por favor, ingresa una contraseña para cifrar el mensaje.');
+                    document.getElementById('password').focus();
+                    return;
+                }
+                
                 document.getElementById('actionInput').value = 'encrypt';
+                document.getElementById('currentMode').textContent = 'Cifrar';
                 document.getElementById('encryptionForm').submit();
             });
             
             document.getElementById('decryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Verificar que la contraseña no esté vacía
+                if (!document.getElementById('password').value.trim()) {
+                    alert('Por favor, ingresa la misma contraseña que usaste para cifrar el mensaje.');
+                    document.getElementById('password').focus();
+                    return;
+                }
+                
+                // Verificar que hay texto cifrado
+                if (!document.getElementById('encrypted').value.trim()) {
+                    alert('No hay texto cifrado para descifrar. Primero debes cifrar un mensaje.');
+                    return;
+                }
+                
+                // Asegurarse de que la acción sea descifrar
                 document.getElementById('actionInput').value = 'decrypt';
+                document.getElementById('currentMode').textContent = 'Descifrar';
+                
+                // Imprimir información de depuración
+                console.log("Enviando formulario para descifrar");
+                console.log("Texto cifrado:", document.getElementById('encrypted').value);
+                console.log("Acción:", document.getElementById('actionInput').value);
+                
+                // Enviar el formulario
                 document.getElementById('encryptionForm').submit();
             });
             
             // Evento para los botones de copiado
+            const showCopiedMessage = function(btn) {
+                // Cambiar el texto del botón momentáneamente
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            };
+            
             document.querySelectorAll('.copy-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    // Cambiar el texto del botón momentáneamente
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
-                    setTimeout(() => {
-                        this.innerHTML = originalHTML;
-                    }, 2000);
+                    showCopiedMessage(this);
                 });
             });
+            
+            if (document.getElementById('copyEncryptedBtn')) {
+                document.getElementById('copyEncryptedBtn').addEventListener('click', function() {
+                    showCopiedMessage(this);
+                });
+            }
+            
+            // Botón para copiar el texto descifrado al campo de mensaje
+            if (document.getElementById('copyToTextBtn')) {
+                document.getElementById('copyToTextBtn').addEventListener('click', function() {
+                    const resultText = document.getElementById('resultText').textContent;
+                    const decryptedText = resultText.startsWith('Mensaje descifrado: ') 
+                        ? resultText.replace('Mensaje descifrado: ', '') 
+                        : resultText;
+                    document.getElementById('text').value = decryptedText;
+                    showCopiedMessage(this);
+                });
+            }
         });
     </script>
 </body>

@@ -111,28 +111,49 @@ class CaosEncryption:
         Returns:
             bytes: Datos en texto plano (descifrados y autenticados).
         """
-        # Verificar que al menos tenga longitud para salt + nonce + tag.
-        if len(encrypted_data) < 16 + 12 + 16:
-            raise ValueError("Datos encriptados demasiado cortos o dañados.")
+        # Proporcionar un mensaje de error más detallado si los datos son demasiado cortos
+        min_length = 16 + 12 + 16  # salt + nonce + tag mínimo
+        if len(encrypted_data) < min_length:
+            error_msg = f"Datos encriptados demasiado cortos: {len(encrypted_data)} bytes. Se requieren al menos {min_length} bytes."
+            print(f"Error de descifrado: {error_msg}")
+            print(f"Primeros bytes (hex): {encrypted_data[:20].hex() if len(encrypted_data) >= 20 else encrypted_data.hex()}")
+            raise ValueError(error_msg)
 
-        # Extraer sal y nonce
-        salt = encrypted_data[:16]
-        nonce = encrypted_data[16:28]
-        ciphertext = encrypted_data[28:]  # Resto incluye ciphertext + tag
-
-        # Derivar la misma clave
-        key = self._derive_key(salt)
-
-        # Instanciar AES-GCM con la clave derivada
-        aesgcm = AESGCM(key)
-
-        # Desencriptar y verificar la integridad automáticamente
         try:
-            plaintext = aesgcm.decrypt(nonce, ciphertext, None)
-        except Exception as e:
-            raise ValueError("Falló la desencriptación o la verificación de integridad.") from e
+            # Extraer sal y nonce
+            salt = encrypted_data[:16]
+            nonce = encrypted_data[16:28]
+            ciphertext = encrypted_data[28:]  # Resto incluye ciphertext + tag
 
-        return plaintext
+            # Derivar la misma clave
+            key = self._derive_key(salt)
+
+            # Instanciar AES-GCM con la clave derivada
+            aesgcm = AESGCM(key)
+
+            # Desencriptar y verificar la integridad automáticamente
+            try:
+                plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+                # Verificar que el texto plano sea procesable
+                if len(plaintext) == 0:
+                    print("Advertencia: El mensaje descifrado está vacío")
+                else:
+                    print(f"Descifrado exitoso. Longitud: {len(plaintext)} bytes")
+                    if len(plaintext) < 100:
+                        print(f"Contenido descifrado: {plaintext}")
+                return plaintext
+            except Exception as e:
+                print(f"Error en la desencriptación AES-GCM: {str(e)}")
+                print(f"Longitud del ciphertext: {len(ciphertext)} bytes")
+                if "verification" in str(e).lower() or "mac" in str(e).lower():
+                    raise ValueError(f"Falló la verificación de integridad. La contraseña es incorrecta o el mensaje ha sido alterado.") from e
+                else:
+                    raise ValueError(f"Error al descifrar: {str(e)}") from e
+        except Exception as e:
+            if not isinstance(e, ValueError) or "Falló la verificación" not in str(e):
+                print(f"Error general al descifrar: {str(e)}")
+                raise ValueError(f"Error al procesar los datos cifrados: {str(e)}") from e
+            raise
 
     def encrypt_file(self, input_path: str, output_path: str) -> None:
         """
