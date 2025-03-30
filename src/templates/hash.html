@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funciones Hash - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Funciones Hash</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Información sobre Funciones Hash</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Las funciones hash son algoritmos que convierten datos de cualquier tamaño en una cadena de bits de longitud fija. Propiedades principales:</p>
+                        <ul>
+                            <li><strong>Unidireccionalidad:</strong> Es computacionalmente imposible obtener el mensaje original a partir del hash.</li>
+                            <li><strong>Determinismo:</strong> El mismo mensaje siempre produce el mismo hash.</li>
+                            <li><strong>Efecto avalancha:</strong> Un pequeño cambio en el mensaje produce un hash completamente diferente.</li>
+                            <li><strong>Resistencia a colisiones:</strong> Es extremadamente difícil encontrar dos mensajes diferentes que produzcan el mismo hash.</li>
+                        </ul>
+                        <p>Usos comunes: verificación de integridad, almacenamiento de contraseñas, firmas digitales, etc.</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Calcular Hash</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="text" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="text" name="text" rows="5" required>{{ message or '' }}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="algorithm" class="form-label">Algoritmo</label>
+                                <select class="form-select" id="algorithm" name="algorithm">
+                                    <option value="md5" {% if algorithm == 'md5' %}selected{% endif %}>MD5 (No seguro para usos criptográficos)</option>
+                                    <option value="sha1" {% if algorithm == 'sha1' %}selected{% endif %}>SHA-1 (No recomendado para nuevas aplicaciones)</option>
+                                    <option value="sha256" {% if algorithm == 'sha256' or not algorithm %}selected{% endif %}>SHA-256</option>
+                                    <option value="sha384" {% if algorithm == 'sha384' %}selected{% endif %}>SHA-384</option>
+                                    <option value="sha512" {% if algorithm == 'sha512' %}selected{% endif %}>SHA-512</option>
+                                    <option value="blake2b" {% if algorithm == 'blake2b' %}selected{% endif %}>BLAKE2b</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Calcular Hash</button>
+                        </form>
+                        
+                        {% if result and result.success %}
+                        <div class="mt-4">
+                            <div class="alert alert-info">
+                                <h5>Resultado:</h5>
+                                <div class="result-box">
+                                    <code id="hashResult">{{ result.hash }}</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#hashResult">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif result and not result.success %}
+                        <div class="mt-4">
+                            <div class="alert alert-danger">
+                                <h5>Error:</h5>
+                                <p>{{ result.error }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-4 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Verificación de Integridad</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Para verificar si dos mensajes generan el mismo hash (lo cual no debería ocurrir con mensajes diferentes):</p>
+                            
+                            <form method="POST" action="?verify=true">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="message1" class="form-label">Mensaje 1</label>
+                                            <textarea class="form-control" id="message1" name="message1" rows="4" required>{{ message1 or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="message2" class="form-label">Mensaje 2</label>
+                                            <textarea class="form-control" id="message2" name="message2" rows="4" required>{{ message2 or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="verify_algorithm" class="form-label">Algoritmo</label>
+                                    <select class="form-select" id="verify_algorithm" name="verify_algorithm">
+                                        <option value="md5" {% if verify_algorithm == 'md5' %}selected{% endif %}>MD5</option>
+                                        <option value="sha1" {% if verify_algorithm == 'sha1' %}selected{% endif %}>SHA-1</option>
+                                        <option value="sha256" {% if verify_algorithm == 'sha256' or not verify_algorithm %}selected{% endif %}>SHA-256</option>
+                                        <option value="sha384" {% if verify_algorithm == 'sha384' %}selected{% endif %}>SHA-384</option>
+                                        <option value="sha512" {% if verify_algorithm == 'sha512' %}selected{% endif %}>SHA-512</option>
+                                        <option value="blake2b" {% if verify_algorithm == 'blake2b' %}selected{% endif %}>BLAKE2b</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Verificar</button>
+                            </form>
+                            
+                            {% if verification_result is defined %}
+                            <div class="mt-4">
+                                <div class="alert {% if verification_result %}alert-success{% else %}alert-danger{% endif %}">
+                                    {% if verification_result %}
+                                    <h5><i class="fas fa-check-circle"></i> Los hashes son idénticos</h5>
+                                    {% else %}
+                                    <h5><i class="fas fa-times-circle"></i> Los hashes son diferentes</h5>
+                                    {% endif %}
+                                    <p><strong>Hash Mensaje 1:</strong> <code>{{ hash1 }}</code></p>
+                                    <p><strong>Hash Mensaje 2:</strong> <code>{{ hash2 }}</code></p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el plugin de copiado
+            new ClipboardJS('.copy-btn');
+            
+            // Evento para los botones de copiado
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    // Cambiar el texto del botón momentáneamente
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

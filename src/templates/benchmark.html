@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark de Algoritmos - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Benchmark de Algoritmos de Cifrado</h1>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Configuración del Benchmark</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/benchmark">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="data_size" class="form-label">Tamaño de datos (bytes):</label>
+                                    <select class="form-select" id="data_size" name="data_size">
+                                        <option value="100">100 bytes (pequeño)</option>
+                                        <option value="1000" selected>1,000 bytes (1KB)</option>
+                                        <option value="10000">10,000 bytes (10KB)</option>
+                                        <option value="50000">50,000 bytes (50KB)</option>
+                                        <option value="100000">100,000 bytes (100KB)</option>
+                                        <option value="500000">500,000 bytes (500KB)</option>
+                                        <option value="1000000">1,000,000 bytes (1MB)</option>
+                                        <option value="5000000">5,000,000 bytes (5MB)</option>
+                                        <option value="10000000">10,000,000 bytes (10MB)</option>
+                                    </select>
+                                    <div class="form-text">Selecciona tamaños pequeños para incluir RSA. Los tamaños grandes podrían tomar más tiempo en completarse y RSA podría no soportarlos.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">Contraseña para algoritmos:</label>
+                                    <input type="text" class="form-control" id="password" name="password" value="benchmark_password" placeholder="Contraseña para pruebas">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Ejecutar Benchmark</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Mostrar resultados -->
+                {% if result %}
+                    {% if result.success %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Benchmark completado con éxito.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Resultados del Benchmark</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <img src="{{ url_for('static', filename=result.chart_path) }}" class="img-fluid" alt="Gráfico de benchmark">
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h6>Tabla de Tiempos</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Algoritmo</th>
+                                                    <th>Tiempo de Cifrado (s)</th>
+                                                    <th>Tiempo de Descifrado (s)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in result.results %}
+                                                <tr>
+                                                    <td>{{ item.algorithm }}</td>
+                                                    <td>{{ "%.6f"|format(item.encrypt_time) }}</td>
+                                                    <td>{{ "%.6f"|format(item.decrypt_time) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5 class="alert-heading">¡Error!</h5>
+                            <p>{{ result.error }}</p>
+                            <hr>
+                            <p class="mb-0">Verifica las opciones de benchmark e intenta nuevamente.</p>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Información educativa sobre benchmark -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Acerca de los Benchmarks de Cifrado</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6><i class="fas fa-chart-line"></i> ¿Qué muestran estos benchmarks?</h6>
+                        <p>
+                            Los benchmarks miden el tiempo que tarda cada algoritmo en cifrar y descifrar datos de un tamaño específico.
+                            Estos resultados te permiten comparar el rendimiento relativo de diferentes enfoques criptográficos.
+                        </p>
+                        
+                        <h6><i class="fas fa-exchange-alt"></i> Comparativa de Algoritmos</h6>
+                        <ul>
+                            <li><strong>AES (Simétrico):</strong> Generalmente el más rápido, ideal para grandes volúmenes de datos.</li>
+                            <li><strong>RSA (Asimétrico):</strong> Significativamente más lento y limitado en el tamaño de datos que puede procesar directamente.</li>
+                            <li><strong>Híbrido (RSA+AES):</strong> Combina la seguridad de RSA con la eficiencia de AES, con una pequeña sobrecarga.</li>
+                            <li><strong>CAOS v3:</strong> Algoritmo personalizado optimizado para velocidad, con rendimiento variable.</li>
+                            <li><strong>CAOS v4:</strong> Implementación basada en AES-GCM con PBKDF2, balance entre seguridad y rendimiento.</li>
+                        </ul>
+                        
+                        <h6><i class="fas fa-cogs"></i> Factores que afectan el rendimiento</h6>
+                        <ul>
+                            <li><strong>Tamaño de los datos:</strong> A mayor tamaño, mayor tiempo de procesamiento.</li>
+                            <li><strong>Complejidad del algoritmo:</strong> Mayor seguridad generalmente significa mayor complejidad computacional.</li>
+                            <li><strong>Implementación:</strong> El mismo algoritmo puede tener diferentes rendimientos según su implementación.</li>
+                            <li><strong>Hardware:</strong> CPU, memoria y otros factores del sistema impactan los tiempos de ejecución.</li>
+                        </ul>
+                        
+                        <div class="alert alert-info mt-3">
+                            <h6 class="alert-heading"><i class="fas fa-lightbulb"></i> Recomendaciones Prácticas</h6>
+                            <p>
+                                Para aplicaciones reales, considera:
+                            </p>
+                            <ul>
+                                <li>Para datos grandes: algoritmos simétricos como AES.</li>
+                                <li>Para intercambio seguro de claves: algoritmos asimétricos como RSA.</li>
+                                <li>Para mejor balance: cifrado híbrido.</li>
+                                <li>Para seguridad con autenticación: AES-GCM o CAOS v4.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado Híbrido - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Cifrado Híbrido (RSA + AES)</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Información sobre Cifrado Híbrido</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>El cifrado híbrido combina las ventajas de los sistemas de cifrado simétrico (rapidez) y asimétrico (seguridad en intercambio de claves):</p>
+                        <ul>
+                            <li><strong>Cifrado de Datos:</strong> Se utiliza un algoritmo simétrico (AES) para cifrar el mensaje, obteniendo alta velocidad incluso con mensajes largos.</li>
+                            <li><strong>Cifrado de Clave:</strong> La clave simétrica se cifra utilizando un algoritmo asimétrico (RSA), asegurando un intercambio seguro de claves.</li>
+                        </ul>
+                        <p><strong>Proceso:</strong></p>
+                        <ol>
+                            <li>Se genera una clave simétrica aleatoria (AES).</li>
+                            <li>El mensaje se cifra con esta clave simétrica.</li>
+                            <li>La clave simétrica se cifra con la clave pública del destinatario (RSA).</li>
+                            <li>Se envían el mensaje cifrado y la clave simétrica cifrada.</li>
+                            <li>El destinatario descifra la clave simétrica usando su clave privada.</li>
+                            <li>Finalmente, el destinatario usa la clave simétrica recuperada para descifrar el mensaje.</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Cifrado Híbrido (AES-256 + RSA-2048)</h5>
+                        <button id="generateBtn" class="btn btn-outline-primary">Generar Par de Claves RSA</button>
+                    </div>
+                    <div class="card-body">
+                        <form id="encryptionForm" method="POST">
+                            <input type="hidden" name="action" id="actionInput" value="encrypt">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="publicKey" class="form-label">Clave Pública RSA (Para cifrar)</label>
+                                    <textarea class="form-control" id="publicKey" name="public_key" rows="5">{{ public_key or '' }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="privateKey" class="form-label">Clave Privada RSA (Para descifrar)</label>
+                                    <textarea class="form-control" id="privateKey" name="private_key" rows="5">{{ private_key or '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="message" name="message" rows="4">{{ message or '' }}</textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="encryptedContent" class="form-label">Mensaje Cifrado</label>
+                                    <textarea class="form-control" id="encryptedContent" name="encrypted_content" rows="3">{{ encrypted_content or '' }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="metadata" class="form-label">Metadatos (IV y clave cifrada)</label>
+                                    <textarea class="form-control" id="metadata" name="metadata" rows="3">{{ metadata or '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col d-flex">
+                                    <button type="button" id="encryptBtn" class="btn btn-primary me-2">Cifrar</button>
+                                    <button type="button" id="decryptBtn" class="btn btn-success">Descifrar</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        {% if result %}
+                        <div class="mt-4">
+                            <div class="alert alert-info">
+                                <h5>Resultado:</h5>
+                                <div class="result-box">
+                                    <code id="resultText">{{ result }}</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#resultText">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Diagrama de Flujo del Cifrado Híbrido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="hybrid-diagram">
+                            <div class="row text-center mb-4">
+                                <div class="col-md-5">
+                                    <div class="diagram-box">
+                                        <h6>Remitente (Alice)</h6>
+                                        <div class="diagram-step">1. Genera clave AES aleatoria</div>
+                                        <div class="diagram-step">2. Cifra mensaje con clave AES</div>
+                                        <div class="diagram-step">3. Cifra clave AES con clave pública RSA de Bob</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center justify-content-center">
+                                    <div class="diagram-arrow">
+                                        <i class="fas fa-arrow-right fa-2x"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="diagram-box">
+                                        <h6>Destinatario (Bob)</h6>
+                                        <div class="diagram-step">4. Descifra clave AES con clave privada RSA</div>
+                                        <div class="diagram-step">5. Usa clave AES para descifrar mensaje</div>
+                                        <div class="diagram-step">6. Lee el mensaje original</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="diagram-data">
+                                    <span class="badge bg-primary">Mensaje cifrado con AES</span>
+                                    <span class="badge bg-warning">Clave AES cifrada con RSA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Ventajas del Cifrado Híbrido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-tachometer-alt"></i> Eficiencia</h6>
+                                <p>Combina la velocidad de los algoritmos simétricos para cifrar datos con la seguridad de los algoritmos asimétricos para intercambiar claves.</p>
+                                
+                                <h6><i class="fas fa-lock"></i> Seguridad</h6>
+                                <p>Proporciona confidencialidad, integridad y autenticidad cuando se combina con firmas digitales.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-exchange-alt"></i> Escalabilidad</h6>
+                                <p>Es ideal para comunicaciones seguras entre múltiples partes, donde cada usuario solo necesita mantener un par de claves RSA.</p>
+                                
+                                <h6><i class="fas fa-globe"></i> Estándar de Internet</h6>
+                                <p>Este enfoque se utiliza en protocolos como TLS/SSL (HTTPS), PGP para correo electrónico, y muchas otras aplicaciones de seguridad.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el plugin de copiado
+            new ClipboardJS('.copy-btn');
+            
+            // Manejo de eventos para los botones
+            document.getElementById('generateBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'generate';
+                document.getElementById('encryptionForm').submit();
+            });
+            
+            document.getElementById('encryptBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'encrypt';
+                document.getElementById('encryptionForm').submit();
+            });
+            
+            document.getElementById('decryptBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'decrypt';
+                document.getElementById('encryptionForm').submit();
+            });
+            
+            // Evento para los botones de copiado
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    // Cambiar el texto del botón momentáneamente
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

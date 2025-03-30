@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encriptación Personalizada - Criptolab</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <style>
+        .result-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .alert-dismissible {
+            padding-right: 3rem;
+        }
+        .copy-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Criptolab</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Encriptación Simétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Encriptación Asimétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Encriptación Híbrida</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/custom">Encriptación Personalizada</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Encriptación Personalizada CAOS</h1>
+        <p class="lead">
+            Prueba los algoritmos de encriptación personalizados CAOS v3 y CAOS v4.
+        </p>
+
+        <div class="alert alert-warning">
+            <strong>¡Importante!</strong> Los algoritmos CAOS son para fines educativos. Para aplicaciones reales,
+            utiliza siempre estándares criptográficos establecidos como AES, RSA, etc.
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="encrypt-tab" data-bs-toggle="tab" data-bs-target="#encrypt" type="button" role="tab" aria-controls="encrypt" aria-selected="true" title="Encriptar">Encriptar</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="decrypt-tab" data-bs-toggle="tab" data-bs-target="#decrypt" type="button" role="tab" aria-controls="decrypt" aria-selected="false" title="Desencriptar">Desencriptar</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="myTabContent">
+                    <!-- Formulario de Encriptación -->
+                    <div class="tab-pane fade show active" id="encrypt" role="tabpanel" aria-labelledby="encrypt-tab">
+                        <form method="post" action="/custom">
+                            <input type="hidden" name="action" value="encrypt">
+                            
+                            <div class="mb-3">
+                                <label for="text" class="form-label">Texto a encriptar:</label>
+                                <textarea class="form-control" id="text" name="text" rows="5" required placeholder="Ingresa el texto que deseas encriptar..."></textarea>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">Contraseña:</label>
+                                    <input type="password" class="form-control" id="password" name="password" required placeholder="Ingresa la contraseña...">
+                                    <div class="form-text">Esta contraseña será utilizada para generar las claves de encriptación.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="version" class="form-label">Versión:</label>
+                                    <select class="form-select" id="version" name="version">
+                                        <option value="caos_v3">CAOS v3 (Optimizado para velocidad)</option>
+                                        <option value="caos_v4" selected>CAOS v4 (AES-GCM con PBKDF2)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Encriptar</button>
+                        </form>
+                    </div>
+
+                    <!-- Formulario de Desencriptación -->
+                    <div class="tab-pane fade" id="decrypt" role="tabpanel" aria-labelledby="decrypt-tab">
+                        <form method="post" action="/custom">
+                            <input type="hidden" name="action" value="decrypt">
+                            
+                            <div class="mb-3">
+                                <label for="encrypted" class="form-label">Texto encriptado (Base64):</label>
+                                <textarea class="form-control" id="encrypted" name="encrypted" rows="5" required placeholder="Ingresa el texto encriptado en formato Base64..."></textarea>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="password_decrypt" class="form-label">Contraseña:</label>
+                                    <input type="password" class="form-control" id="password_decrypt" name="password" required placeholder="Ingresa la contraseña...">
+                                    <div class="form-text">Debe ser la misma contraseña utilizada para encriptar.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="version_decrypt" class="form-label">Versión:</label>
+                                    <select class="form-select" id="version_decrypt" name="version">
+                                        <option value="caos_v3">CAOS v3 (Optimizado para velocidad)</option>
+                                        <option value="caos_v4" selected>CAOS v4 (AES-GCM con PBKDF2)</option>
+                                    </select>
+                                    <div class="form-text">Selecciona la misma versión que usaste para encriptar.</div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Desencriptar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mostrar resultados -->
+        {% if result %}
+            {% if result.success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Operación realizada con éxito.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="result-box">
+                    {% if result.encrypted %}
+                        <h4>Texto Encriptado:</h4>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="5" readonly aria-label="Texto encriptado">{{ result.encrypted }}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.encrypted }}" aria-label="Copiar" title="Copiar al portapapeles">📋</button>
+                            </div>
+                            <small class="text-muted">
+                                El texto encriptado está en formato Base64. Guárdalo junto con la contraseña para desencriptar.
+                            </small>
+                        </div>
+
+                        <h4>Datos originales:</h4>
+                        <p>{{ result.original }}</p>
+                    {% endif %}
+
+                    {% if result.decrypted %}
+                        <h4>Texto Desencriptado:</h4>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="5" readonly aria-label="Texto desencriptado">{{ result.decrypted }}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.decrypted }}" aria-label="Copiar" title="Copiar al portapapeles">📋</button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">¡Error!</h4>
+                    <p>{{ result.error }}</p>
+                    <hr>
+                    <p class="mb-0">Verifica que los datos ingresados sean correctos.</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Información educativa sobre algoritmos CAOS -->
+        <div class="card mt-4">
+            <div class="card-header">
+                Acerca de los algoritmos CAOS
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">CAOS v3 - Optimizado para velocidad</h5>
+                <p class="card-text">
+                    CAOS v3 es un algoritmo de encriptación personalizado diseñado para máxima velocidad y rendimiento. 
+                    Utiliza técnicas de optimización como tablas precalculadas, operaciones bit a bit y rotaciones rápidas.
+                </p>
+                <p class="card-text">
+                    Características principales:
+                </p>
+                <ul>
+                    <li>Operaciones matemáticas optimizadas mediante tablas de lookup</li>
+                    <li>Estructura de red de sustitución-permutación simplificada</li>
+                    <li>Optimizado para procesamiento de datos grandes</li>
+                    <li>Incluye verificación de integridad mediante checksum</li>
+                </ul>
+                
+                <h5 class="card-title mt-3">CAOS v4 - Seguridad mejorada</h5>
+                <p class="card-text">
+                    CAOS v4 mejora la seguridad utilizando AES-GCM y derivación de claves mediante PBKDF2. 
+                    Proporciona cifrado autenticado y protección de integridad.
+                </p>
+                <p class="card-text">
+                    Características principales:
+                </p>
+                <ul>
+                    <li>Cifrado autenticado con AES en modo GCM</li>
+                    <li>Derivación de clave con PBKDF2-HMAC-SHA256 para resistencia a ataques de fuerza bruta</li>
+                    <li>Uso de sal aleatoria para cada mensaje</li>
+                    <li>Verificación de integridad integrada</li>
+                </ul>
+                
+                <div class="alert alert-warning mt-3">
+                    <h5 class="alert-heading">Advertencia de Seguridad</h5>
+                    <p>
+                        Los algoritmos personalizados son excelentes para aprendizaje, pero no deben usarse en
+                        aplicaciones reales de seguridad. Para protección real de datos, utiliza siempre algoritmos
+                        estándar bien establecidos y auditados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                Criptolab - Laboratorio de Criptografía &copy; 2023
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para copiar al portapapeles
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const textToCopy = this.getAttribute('data-copy');
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Cambiar el ícono temporalmente para indicar que se copió
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '✅';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 1000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

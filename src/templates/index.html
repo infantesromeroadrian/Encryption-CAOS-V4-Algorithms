@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CriptoLab - Laboratorio de Criptografía</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Laboratorio de Criptografía</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Bienvenido a CriptoLab</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Una plataforma interactiva para explorar y aprender sobre algoritmos de cifrado, funciones hash y firmas digitales.</p>
+                        <p>Selecciona una de las secciones en el menú lateral para comenzar a experimentar con diferentes técnicas criptográficas.</p>
+                    </div>
+                </div>
+
+                <h4 class="mb-3">Explora las diferentes técnicas criptográficas</h4>
+                
+                <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-key fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Cifrado Simétrico</h5>
+                                <p class="card-text">Prueba el algoritmo AES en diferentes modos de operación como CBC y GCM. Ideal para proteger datos con una clave compartida.</p>
+                                <a href="/symmetric" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-lock fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Cifrado Asimétrico</h5>
+                                <p class="card-text">Experimenta con RSA para cifrar mensajes utilizando pares de claves pública/privada. Ideal para intercambio seguro de información.</p>
+                                <a href="/asymmetric" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-shield-alt fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Cifrado Híbrido</h5>
+                                <p class="card-text">Combina la velocidad del cifrado simétrico con la seguridad del cifrado asimétrico. Utilizado en protocolos como HTTPS.</p>
+                                <a href="/hybrid" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-random fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">CAOS V4.0</h5>
+                                <p class="card-text">Experimenta con algoritmos CAOS v3 y v4, diseñados para demostrar técnicas de cifrado caótico y personalizado.</p>
+                                <a href="/custom" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-fingerprint fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Funciones Hash</h5>
+                                <p class="card-text">Calcula y verifica hashes con algoritmos como SHA-256, MD5 y más. Ideales para verificar integridad de datos.</p>
+                                <a href="/hash" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light text-center">
+                                <i class="fas fa-signature fa-3x my-3 text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">Firmas Digitales</h5>
+                                <p class="card-text">Experimenta con firmas digitales para garantizar autenticidad e integridad en la comunicación digital.</p>
+                                <a href="/digital_signature" class="btn btn-primary">Explorar</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>¿Qué es la criptografía?</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>La criptografía es la ciencia que estudia cómo proteger la información mediante técnicas de cifrado. Es fundamental para la seguridad informática moderna, permitiendo:</p>
+                        <ul>
+                            <li><strong>Confidencialidad:</strong> Solo los destinatarios autorizados pueden leer la información.</li>
+                            <li><strong>Integridad:</strong> Detectar si la información ha sido modificada.</li>
+                            <li><strong>Autenticidad:</strong> Verificar la identidad del origen de la información.</li>
+                            <li><strong>No repudio:</strong> Impedir que el emisor niegue haber enviado la información.</li>
+                        </ul>
+                        <p>Esta aplicación te permite explorar estos conceptos de manera práctica e interactiva.</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Comparar Rendimiento</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>¿Quieres comparar el rendimiento de los diferentes algoritmos de cifrado?</p>
+                        <p>Utiliza nuestra herramienta de benchmark para medir y comparar los tiempos de cifrado y descifrado con diferentes tamaños de datos.</p>
+                        <a href="/benchmark" class="btn btn-primary">Ir al Benchmark</a>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html> 

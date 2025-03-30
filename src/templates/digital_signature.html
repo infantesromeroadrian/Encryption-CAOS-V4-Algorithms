@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firmas Digitales - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Firmas Digitales</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Información sobre Firmas Digitales</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Las firmas digitales son mecanismos criptográficos que permiten demostrar la autenticidad e integridad de un mensaje o documento. Características principales:</p>
+                        <ul>
+                            <li><strong>Autenticidad:</strong> Verifican que el mensaje fue creado por el remitente que afirma haberlo creado.</li>
+                            <li><strong>Integridad:</strong> Cualquier alteración en el mensaje original invalidará la firma digital.</li>
+                            <li><strong>No repudio:</strong> El firmante no puede negar haber enviado el mensaje.</li>
+                        </ul>
+                        <p>El proceso general:</p>
+                        <ol>
+                            <li>El remitente calcula un hash del mensaje.</li>
+                            <li>El hash se cifra usando la clave privada del remitente.</li>
+                            <li>El mensaje y la firma se envían al destinatario.</li>
+                            <li>El destinatario descifra la firma con la clave pública del remitente.</li>
+                            <li>Si el hash descifrado coincide con el hash del mensaje recibido, la firma es válida.</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Operaciones con Firmas Digitales</h5>
+                        <button id="generateBtn" class="btn btn-outline-primary">Generar Par de Claves</button>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <input type="hidden" name="action" id="actionInput" value="sign">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="privateKey" class="form-label">Clave Privada (Para firmar)</label>
+                                    <textarea class="form-control" id="privateKey" name="private_key" rows="5">{{ private_key }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="publicKey" class="form-label">Clave Pública (Para verificar)</label>
+                                    <textarea class="form-control" id="publicKey" name="public_key" rows="5">{{ public_key }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="message" name="message" rows="3" required>{{ message or '' }}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="signature" class="form-label">Firma Digital</label>
+                                <textarea class="form-control" id="signature" name="signature" rows="3">{{ signature or '' }}</textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col d-flex">
+                                    <button type="button" id="signBtn" class="btn btn-primary me-2">Firmar Mensaje</button>
+                                    <button type="button" id="verifyBtn" class="btn btn-success">Verificar Firma</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        {% if result %}
+                        <div class="mt-4">
+                            <div class="alert {% if result.success %}alert-success{% else %}alert-danger{% endif %}">
+                                <h5>
+                                    {% if result.success %}
+                                    <i class="fas fa-check-circle"></i> {{ result.message }}
+                                    {% else %}
+                                    <i class="fas fa-times-circle"></i> {{ result.message }}
+                                    {% endif %}
+                                </h5>
+                                {% if result.details %}
+                                <p>{{ result.details }}</p>
+                                {% endif %}
+                                
+                                {% if result.signature %}
+                                <div class="mt-2">
+                                    <p><strong>Firma generada:</strong></p>
+                                    <div class="result-box">
+                                        <code id="signatureResult">{{ result.signature }}</code>
+                                        <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#signatureResult">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Ejemplo Práctico</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Escenario: Verificar la autenticidad de un documento importante</h6>
+                            <ol>
+                                <li>El remitente (Alice) firma el documento con su clave privada.</li>
+                                <li>Alice envía el documento y la firma digital al destinatario (Bob).</li>
+                                <li>Bob verifica la firma utilizando la clave pública de Alice.</li>
+                                <li>Si la verificación es correcta, Bob tiene garantía de que:
+                                    <ul>
+                                        <li>El documento fue firmado por Alice (autenticidad).</li>
+                                        <li>El documento no ha sido alterado (integridad).</li>
+                                        <li>Alice no puede negar haber firmado el documento (no repudio).</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Nota importante:</strong> Nunca comparta su clave privada. Cualquier persona con acceso a ella puede generar firmas en su nombre.
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el plugin de copiado
+            new ClipboardJS('.copy-btn');
+            
+            // Manejo de eventos para los botones
+            document.getElementById('generateBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'generate';
+                document.querySelector('form').submit();
+            });
+            
+            document.getElementById('signBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'sign';
+                document.querySelector('form').submit();
+            });
+            
+            document.getElementById('verifyBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'verify';
+                document.querySelector('form').submit();
+            });
+            
+            // Evento para los botones de copiado
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    // Cambiar el texto del botón momentáneamente
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

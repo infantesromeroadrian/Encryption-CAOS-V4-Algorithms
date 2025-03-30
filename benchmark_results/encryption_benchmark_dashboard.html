@@ -1,0 +1,118 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Dashboard de Benchmark de Encriptación</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f5f5f5;
+                color: #333;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border-radius: 5px;
+            }
+            h1 {
+                color: #2c3e50;
+                text-align: center;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #ecf0f1;
+            }
+            h2 {
+                color: #3498db;
+                margin-top: 30px;
+            }
+            .plot-container {
+                margin: 20px 0;
+                padding: 15px;
+                background-color: white;
+                border-radius: 5px;
+                box-shadow: 0 0 5px rgba(0,0,0,0.05);
+            }
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                margin: 0 -10px;
+            }
+            .col {
+                flex: 1;
+                padding: 0 10px;
+                min-width: 300px;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                font-size: 0.9em;
+                color: #7f8c8d;
+            }
+            .conclusion {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-left: 4px solid #3498db;
+                margin: a0px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Dashboard de Benchmark de Algoritmos de Encriptación</h1>
+            
+            <div class="conclusion">
+                <h3>Conclusiones Principales:</h3>
+                <ul>
+                    <li>El algoritmo AES es el más rápido para operaciones simétricas.</li>
+                    <li>RSA es significativamente más lento, especialmente en desencriptación.</li>
+                    <li>El enfoque híbrido (RSA+AES) ofrece un buen equilibrio entre seguridad y rendimiento.</li>
+                    <li>CAOS v4 (AES-GCM) supera significativamente a CAOS v3 en rendimiento y seguridad.</li>
+                    <li>Para grandes volúmenes de datos, CAOS v4 es competitivo con AES puro, añadiendo autenticación.</li>
+                </ul>
+            </div>
+    
+            <h2>Rendimiento por Tamaño de Datos</h2>
+            <div class="plot-container">
+                <iframe src="encryption_benchmark_lines.html" width="100%" height="800" frameborder="0"></iframe>
+            </div>
+            
+            <h2>Eficiencia Relativa (Comparado con el Mejor)</h2>
+            <div class="plot-container">
+                <iframe src="relative_performance_heatmap.html" width="100%" height="500" frameborder="0"></iframe>
+            </div>
+            
+            <div class="row">
+                <div class="col">
+                    <h2>Características de los Algoritmos</h2>
+                    <div class="plot-container">
+                        <iframe src="algorithm_characteristics_radar.html" width="100%" height="700" frameborder="0"></iframe>
+                    </div>
+                </div>
+                <div class="col">
+                    <h2>Análisis Detallado</h2>
+                    <div class="plot-container">
+                        <h3>Comparación por Tamaño</h3>
+                        <p>Examina el rendimiento para cada tamaño de datos:</p>
+                        <ul>
+    <li><a href="benchmark_size_100.html" target="_blank">Datos de 100 bytes</a></li>
+<li><a href="benchmark_size_1000.html" target="_blank">Datos de 1000 bytes</a></li>
+<li><a href="benchmark_size_10000.html" target="_blank">Datos de 10000 bytes</a></li>
+<li><a href="benchmark_size_50000.html" target="_blank">Datos de 50000 bytes</a></li>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="footer">
+                <p>Generado para el análisis de algoritmos de encriptación © 2023</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    

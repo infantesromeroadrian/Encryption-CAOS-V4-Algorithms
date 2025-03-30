@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAOS V4.0 - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Cifrado Personalizado CAOS</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Información sobre Cifrado CAOS</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>CAOS es un conjunto de algoritmos de cifrado personalizados desarrollados con fines educativos:</p>
+                        <ul>
+                            <li><strong>CAOS v3:</strong> Algoritmo optimizado para velocidad con tablas precalculadas, operaciones bit a bit y rotaciones rápidas.</li>
+                            <li><strong>CAOS v4:</strong> Versión mejorada que implementa AES-GCM con derivación de claves PBKDF2 para mayor seguridad y resistencia a ataques.</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <strong>¡Importante!</strong> Los algoritmos CAOS son para fines educativos. Para aplicaciones reales,
+                            utiliza siempre estándares criptográficos establecidos como AES, RSA, etc.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Cifrado y Descifrado CAOS</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="encryptionForm" method="POST">
+                            <input type="hidden" name="action" id="actionInput" value="encrypt">
+                            
+                            <div class="mb-3">
+                                <label for="text" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="text" name="text" rows="4">{{ original or '' }}</textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="form-text">Esta contraseña se utilizará para generar las claves de cifrado.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="version" class="form-label">Versión del Algoritmo</label>
+                                    <select class="form-select" id="version" name="version">
+                                        <option value="caos_v3">CAOS v3 (Optimizado para velocidad)</option>
+                                        <option value="caos_v4" selected>CAOS v4 (AES-GCM con PBKDF2)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="encrypted" class="form-label">Mensaje Cifrado (Base64)</label>
+                                <textarea class="form-control" id="encrypted" name="encrypted" rows="3">{{ encrypted or '' }}</textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col d-flex">
+                                    <button type="button" id="encryptBtn" class="btn btn-primary me-2">Cifrar</button>
+                                    <button type="button" id="decryptBtn" class="btn btn-success">Descifrar</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        {% if result %}
+                        <div class="mt-4">
+                            <div class="alert {% if result.success %}alert-info{% else %}alert-danger{% endif %}">
+                                <h5>Resultado:</h5>
+                                <div class="result-box">
+                                    {% if result.success %}
+                                        {% if result.encrypted %}
+                                            <code id="resultText">Mensaje cifrado correctamente.</code>
+                                        {% elif result.decrypted %}
+                                            <code id="resultText">Mensaje descifrado: {{ result.decrypted }}</code>
+                                        {% endif %}
+                                    {% else %}
+                                        <code id="resultText">Error: {{ result.error }}</code>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#resultText">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Características de las Versiones CAOS</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-tachometer-alt"></i> CAOS v3</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Algoritmo optimizado para máxima velocidad y rendimiento:</p>
+                                        <ul>
+                                            <li>Utiliza tablas precalculadas para operaciones rápidas</li>
+                                            <li>Implementa operaciones bit a bit y rotaciones optimizadas</li>
+                                            <li>Derivación de clave simple basada en hash</li>
+                                            <li>Cifrado en bloques con modo de operación personalizado</li>
+                                        </ul>
+                                        <p class="text-muted">Ideal para escenarios donde la velocidad es crítica y la seguridad es secundaria.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-shield-alt"></i> CAOS v4</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Versión avanzada con énfasis en seguridad:</p>
+                                        <ul>
+                                            <li>Implementa AES-256 en modo GCM para garantizar confidencialidad y autenticidad</li>
+                                            <li>Derivación de claves mediante PBKDF2 con sal aleatoria y alto número de iteraciones</li>
+                                            <li>Incluye nonce aleatorio para cada mensaje</li>
+                                            <li>Verifica la integridad del mensaje mediante el tag de autenticación GCM</li>
+                                        </ul>
+                                        <p class="text-muted">Recomendado para ejercicios educativos sobre criptografía moderna.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Comparativa de Seguridad</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Característica</th>
+                                        <th>CAOS v3</th>
+                                        <th>CAOS v4</th>
+                                        <th>Estándar Recomendado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Algoritmo base</td>
+                                        <td>Personalizado</td>
+                                        <td>AES-256</td>
+                                        <td>AES-256</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Modo de operación</td>
+                                        <td>Personalizado</td>
+                                        <td>GCM</td>
+                                        <td>GCM o ChaCha20-Poly1305</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Derivación de claves</td>
+                                        <td>Básica (hash)</td>
+                                        <td>PBKDF2</td>
+                                        <td>Argon2, PBKDF2 o scrypt</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Autenticación</td>
+                                        <td>No</td>
+                                        <td>Sí (GCM)</td>
+                                        <td>Sí (AEAD)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Resistencia a análisis</td>
+                                        <td>Baja</td>
+                                        <td>Alta</td>
+                                        <td>Alta</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el plugin de copiado
+            new ClipboardJS('.copy-btn');
+            
+            // Manejo de eventos para los botones
+            document.getElementById('encryptBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'encrypt';
+                document.getElementById('encryptionForm').submit();
+            });
+            
+            document.getElementById('decryptBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('actionInput').value = 'decrypt';
+                document.getElementById('encryptionForm').submit();
+            });
+            
+            // Evento para los botones de copiado
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    // Cambiar el texto del botón momentáneamente
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

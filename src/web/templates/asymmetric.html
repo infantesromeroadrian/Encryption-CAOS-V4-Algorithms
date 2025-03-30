@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encriptación Asimétrica - Criptolab</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <style>
+        .result-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .alert-dismissible {
+            padding-right: 3rem;
+        }
+        .copy-btn {
+            cursor: pointer;
+        }
+        .key-box {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Criptolab</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Encriptación Simétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/asymmetric">Encriptación Asimétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Encriptación Híbrida</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">Encriptación Personalizada</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Encriptación Asimétrica (RSA)</h1>
+        <p class="lead">
+            La encriptación asimétrica utiliza un par de claves: una pública para encriptar y una privada para desencriptar.
+            RSA es uno de los algoritmos asimétricos más utilizados.
+        </p>
+
+        <div class="alert alert-info">
+            <strong>¡Importante!</strong> Primero genera un par de claves antes de intentar encriptar o desencriptar.
+            La clave pública se usa para encriptar y la privada para desencriptar.
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="keys-tab" data-bs-toggle="tab" data-bs-target="#keys" type="button" role="tab" aria-controls="keys" aria-selected="true">Generar Claves</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="encrypt-tab" data-bs-toggle="tab" data-bs-target="#encrypt" type="button" role="tab" aria-controls="encrypt" aria-selected="false">Encriptar</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="decrypt-tab" data-bs-toggle="tab" data-bs-target="#decrypt" type="button" role="tab" aria-controls="decrypt" aria-selected="false">Desencriptar</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="myTabContent">
+                    <!-- Generación de Claves -->
+                    <div class="tab-pane fade show active" id="keys" role="tabpanel" aria-labelledby="keys-tab">
+                        <form method="post" action="/asymmetric">
+                            <input type="hidden" name="action" value="generate">
+                            <p class="mb-3">
+                                Genera un nuevo par de claves RSA de 2048 bits. La clave pública se puede compartir,
+                                pero la clave privada debe mantenerse segura.
+                            </p>
+                            <button type="submit" class="btn btn-primary">Generar Par de Claves RSA</button>
+                        </form>
+                    </div>
+
+                    <!-- Formulario de Encriptación -->
+                    <div class="tab-pane fade" id="encrypt" role="tabpanel" aria-labelledby="encrypt-tab">
+                        <form method="post" action="/asymmetric">
+                            <input type="hidden" name="action" value="encrypt">
+                            
+                            <div class="mb-3">
+                                <label for="text" class="form-label">Texto a encriptar:</label>
+                                <textarea class="form-control" id="text" name="text" rows="3" required placeholder="Ingresa el texto que deseas encriptar..."></textarea>
+                                <div class="form-text">
+                                    Nota: RSA tiene límites en el tamaño del texto que puede encriptar directamente.
+                                    Para textos largos, usa encriptación híbrida.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="public_key" class="form-label">Clave Pública (PEM):</label>
+                                <textarea class="form-control" id="public_key" name="public_key" rows="8" required placeholder="Pega aquí la clave pública en formato PEM..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Encriptar</button>
+                        </form>
+                    </div>
+
+                    <!-- Formulario de Desencriptación -->
+                    <div class="tab-pane fade" id="decrypt" role="tabpanel" aria-labelledby="decrypt-tab">
+                        <form method="post" action="/asymmetric">
+                            <input type="hidden" name="action" value="decrypt">
+                            
+                            <div class="mb-3">
+                                <label for="encrypted" class="form-label">Texto encriptado (Base64):</label>
+                                <textarea class="form-control" id="encrypted" name="encrypted" rows="3" required placeholder="Ingresa el texto encriptado en formato Base64..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="private_key" class="form-label">Clave Privada (PEM):</label>
+                                <textarea class="form-control" id="private_key" name="private_key" rows="8" required placeholder="Pega aquí la clave privada en formato PEM..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Desencriptar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mostrar resultados -->
+        {% if result %}
+            {% if result.success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Operación realizada con éxito.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="result-box">
+                    {% if result.public_key and result.private_key %}
+                        <h4>Par de Claves RSA Generado:</h4>
+                        
+                        <h5>Clave Pública:</h5>
+                        <div class="input-group mb-3">
+                            <div class="key-box">{{ result.public_key }}</div>
+                            <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.public_key }}" title="Copiar">📋</button>
+                        </div>
+                        
+                        <h5>Clave Privada:</h5>
+                        <div class="alert alert-warning">
+                            <strong>¡Advertencia!</strong> Mantén esta clave privada segura. No la compartas con nadie.
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="key-box">{{ result.private_key }}</div>
+                            <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.private_key }}" title="Copiar">📋</button>
+                        </div>
+                    {% endif %}
+
+                    {% if result.encrypted %}
+                        <h4>Texto Encriptado:</h4>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="3" readonly>{{ result.encrypted }}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.encrypted }}" title="Copiar">📋</button>
+                            </div>
+                            <small class="text-muted">
+                                Este es el texto encriptado en formato Base64. Solo puede ser desencriptado con la clave privada correspondiente.
+                            </small>
+                        </div>
+
+                        <h4>Datos originales:</h4>
+                        <p>{{ result.original }}</p>
+                    {% endif %}
+
+                    {% if result.decrypted %}
+                        <h4>Texto Desencriptado:</h4>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="3" readonly>{{ result.decrypted }}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.decrypted }}" title="Copiar">📋</button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">¡Error!</h4>
+                    <p>{{ result.error }}</p>
+                    <hr>
+                    <p class="mb-0">Verifica que los datos ingresados sean correctos.</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Información educativa sobre RSA -->
+        <div class="card mt-4">
+            <div class="card-header">
+                Acerca de la Encriptación Asimétrica RSA
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">¿Cómo funciona RSA?</h5>
+                <p class="card-text">
+                    RSA es un algoritmo de encriptación asimétrica que utiliza dos claves matemáticamente relacionadas:
+                </p>
+                <ul>
+                    <li><strong>Clave Pública:</strong> Se puede compartir libremente y se usa para encriptar mensajes.</li>
+                    <li><strong>Clave Privada:</strong> Debe mantenerse secreta y se usa para desencriptar mensajes.</li>
+                </ul>
+                
+                <h5 class="card-title mt-3">Ventajas de RSA</h5>
+                <ul>
+                    <li>No necesitas compartir una clave secreta con el destinatario.</li>
+                    <li>Proporciona autenticidad además de confidencialidad.</li>
+                    <li>Ideal para intercambio seguro de claves y firmas digitales.</li>
+                </ul>
+                
+                <h5 class="card-title mt-3">Limitaciones</h5>
+                <ul>
+                    <li>Más lento que la encriptación simétrica.</li>
+                    <li>Limitado en el tamaño de datos que puede encriptar directamente.</li>
+                    <li>Para RSA-2048, el tamaño máximo es aproximadamente 245 bytes.</li>
+                </ul>
+                
+                <div class="alert alert-info mt-3">
+                    <h5 class="alert-heading">Recomendación</h5>
+                    <p>
+                        Para mensajes largos, se recomienda usar encriptación híbrida:
+                    </p>
+                    <ol>
+                        <li>Generar una clave simétrica aleatoria (AES)</li>
+                        <li>Encriptar el mensaje con la clave simétrica</li>
+                        <li>Encriptar la clave simétrica con RSA</li>
+                        <li>Transmitir tanto el mensaje encriptado como la clave encriptada</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                Criptolab - Laboratorio de Criptografía &copy; 2023
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para copiar al portapapeles
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const textToCopy = this.getAttribute('data-copy');
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Cambiar el ícono temporalmente para indicar que se copió
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '✅';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 1000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
