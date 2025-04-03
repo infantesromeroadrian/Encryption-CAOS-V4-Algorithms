@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado Asimétrico - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="bi bi-house"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/symmetric">
+                                <i class="bi bi-lock"></i> Cifrado Simétrico
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/asymmetric">
+                                <i class="bi bi-key"></i> Cifrado Asimétrico
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hybrid">
+                                <i class="bi bi-shuffle"></i> Cifrado Híbrido
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hash">
+                                <i class="bi bi-hash"></i> Funciones Hash
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/digital_signature">
+                                <i class="bi bi-pen"></i> Firmas Digitales
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/benchmark">
+                                <i class="bi bi-speedometer"></i> Benchmark
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Cifrado Asimétrico</h1>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">RSA (Rivest-Shamir-Adleman)</h5>
+                                <p class="card-text">
+                                    RSA es uno de los algoritmos de cifrado asimétrico más utilizados. Ofrece seguridad basada
+                                    en la dificultad de factorizar el producto de dos números primos grandes.
+                                </p>
+                                <ul>
+                                    <li>Adecuado para cifrar mensajes cortos</li>
+                                    <li>Ideal para intercambio seguro de claves</li>
+                                    <li>Ampliamente utilizado en aplicaciones de seguridad</li>
+                                </ul>
+                                <a href="{{ url_for('asymmetric.rsa_page') }}" class="btn btn-primary">Ir a RSA</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">ECC (Criptografía de Curva Elíptica)</h5>
+                                <p class="card-text">
+                                    ECC ofrece el mismo nivel de seguridad que RSA pero con claves mucho más pequeñas, lo que
+                                    lo hace ideal para dispositivos con recursos limitados.
+                                </p>
+                                <ul>
+                                    <li>Claves más cortas que RSA para el mismo nivel de seguridad</li>
+                                    <li>Menor consumo de recursos computacionales</li>
+                                    <li>Ideal para dispositivos móviles y IoT</li>
+                                </ul>
+                                <a href="{{ url_for('asymmetric.ecc_page') }}" class="btn btn-primary">Ir a ECC</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Acerca del Cifrado Asimétrico
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">¿Qué es el cifrado asimétrico?</h5>
+                        <p class="card-text">
+                            El cifrado asimétrico utiliza un par de claves matemáticamente relacionadas:
+                            una clave pública para cifrar mensajes y una clave privada para descifrarlos.
+                        </p>
+                        
+                        <h5 class="card-title mt-3">Ventajas del cifrado asimétrico</h5>
+                        <ul>
+                            <li>No requiere intercambio previo de claves secretas</li>
+                            <li>Proporciona autenticación además de confidencialidad</li>
+                            <li>Permite firmas digitales para verificar la autenticidad de los mensajes</li>
+                            <li>Ideal para comunicaciones seguras a través de canales inseguros</li>
+                        </ul>
+                        
+                        <h5 class="card-title mt-3">Limitaciones</h5>
+                        <ul>
+                            <li>Más lento que el cifrado simétrico</li>
+                            <li>Limitado en el tamaño de datos que puede cifrar (especialmente RSA)</li>
+                            <li>Requiere infraestructura para gestión de claves públicas</li>
+                        </ul>
+                        
+                        <h5 class="card-title mt-3">Aplicaciones comunes</h5>
+                        <ul>
+                            <li>Protocolo HTTPS para navegación web segura</li>
+                            <li>Correo electrónico cifrado (PGP, S/MIME)</li>
+                            <li>Autenticación de documentos digitales</li>
+                            <li>Infraestructura de clave pública (PKI)</li>
+                        </ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html> 

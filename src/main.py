@@ -13,11 +13,11 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Importar la aplicación Flask desde el paquete web
-from web.app import app
+from web import app
 
 if __name__ == "__main__":
     # Crear directorios necesarios
-    for d in ['web/templates', 'web/static']:
+    for d in ['templates', 'static']:
         full_path = os.path.join(os.path.dirname(__file__), d)
         if not os.path.exists(full_path):
             os.makedirs(full_path)

@@ -265,5 +265,54 @@ def demo():
     print("CAOS v4.0 finalizado.")
 
 
+def encrypt(text, password, iterations=100_000, seed=None):
+    """
+    Función de interfaz para encriptar texto con CAOS v4.0.
+    
+    Args:
+        text (str or bytes): Texto a encriptar
+        password (str): Contraseña para la encriptación
+        iterations (int): Número de iteraciones para PBKDF2
+        seed (int): Semilla, no usada pero incluida para compatibilidad
+    
+    Returns:
+        bytes: Datos encriptados
+    """
+    # Convertir texto a bytes si es necesario
+    if isinstance(text, str):
+        text = text.encode('utf-8')
+        
+    # Crear instancia de CaosEncryption
+    cipher = CaosEncryption(password=password, iterations=iterations)
+    
+    # Encriptar los datos
+    return cipher.encrypt(text)
+
+def decrypt(encrypted_data, password, iterations=100_000, seed=None):
+    """
+    Función de interfaz para desencriptar datos con CAOS v4.0.
+    
+    Args:
+        encrypted_data (bytes): Datos encriptados
+        password (str): Contraseña para la desencriptación
+        iterations (int): Número de iteraciones para PBKDF2
+        seed (int): Semilla, no usada pero incluida para compatibilidad
+    
+    Returns:
+        str: Texto desencriptado
+    """
+    # Crear instancia de CaosEncryption
+    cipher = CaosEncryption(password=password, iterations=iterations)
+    
+    # Desencriptar los datos
+    result = cipher.decrypt(encrypted_data)
+    
+    # Convertir a string si los datos son texto
+    try:
+        return result.decode('utf-8')
+    except UnicodeDecodeError:
+        # Si no se puede decodificar como UTF-8, devolver los bytes directamente
+        return result
+
 if __name__ == "__main__":
     demo() 

@@ -25,7 +25,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">Criptolab</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -125,21 +125,33 @@
                         <form method="post" action="/symmetric">
                             <input type="hidden" name="action" value="decrypt">
                             
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill"></i> <strong>Guía de descifrado:</strong> Para desencriptar correctamente necesitas:
+                                <ol>
+                                    <li>El texto cifrado en formato Base64</li>
+                                    <li>El Vector de Inicialización (IV) usado durante el cifrado</li>
+                                    <li>La misma contraseña usada para cifrar</li>
+                                    <li>El mismo modo de operación (CBC o GCM)</li>
+                                </ol>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="encrypted" class="form-label">Texto encriptado (Base64):</label>
                                 <textarea class="form-control" id="encrypted" name="encrypted" rows="3" required placeholder="Ingresa el texto encriptado en formato Base64..."></textarea>
+                                <div class="form-text">Copia aquí SOLO el texto cifrado, NO el IV. Estos son datos separados.</div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="iv" class="form-label">Vector de Inicialización (IV) en Base64:</label>
                                 <input type="text" class="form-control" id="iv" name="iv" required placeholder="Ingresa el IV en formato Base64...">
-                                <div class="form-text">El IV es necesario para desencriptar correctamente.</div>
+                                <div class="form-text"><strong class="text-danger">¡IMPORTANTE!</strong> El IV es un valor separado que debes haber guardado junto con el texto cifrado. Si usas CBC, ambos valores son necesarios para la desencriptación.</div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="password_decrypt" class="form-label">Contraseña:</label>
                                     <input type="password" class="form-control" id="password_decrypt" name="password" required placeholder="Ingresa la contraseña...">
+                                    <div class="form-text">Debe ser <strong>exactamente la misma</strong> usada durante el cifrado.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="algorithm_decrypt" class="form-label">Algoritmo:</label>
@@ -163,6 +175,7 @@
                                         GCM (Galois/Counter Mode)
                                     </label>
                                 </div>
+                                <div class="form-text">Selecciona el mismo modo que usaste para encriptar.</div>
                             </div>
 
                             <button type="submit" class="btn btn-primary">Desencriptar</button>
@@ -185,34 +198,67 @@
                         <h4>Texto Encriptado:</h4>
                         <div class="mb-3">
                             <div class="input-group">
-                                <textarea class="form-control" rows="3" readonly>{{ result.encrypted }}</textarea>
+                                <textarea class="form-control" rows="3" readonly aria-label="Texto Encriptado">{{ result.encrypted }}</textarea>
                                 <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.encrypted }}" title="Copiar">📋</button>
                             </div>
                         </div>
 
+                        {% if result.iv %}
+                        <div class="alert alert-warning">
+                            <h4 class="alert-heading">¡Importante! Guarda ambos valores</h4>
+                            <p>Para descifrar correctamente, necesitarás guardar <strong>tanto el texto cifrado como el IV</strong> mostrados aquí.</p>
+                            <hr>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary" id="usarParaDescifrarBtn">
+                                    Usar estos datos para descifrar
+                                </button>
+                                <button type="button" class="btn btn-success" id="descifrarAutomaticamenteBtn">
+                                    Descifrar automáticamente
+                                </button>
+                            </div>
+                        </div>
+                        
                         <h4>Vector de Inicialización (IV):</h4>
                         <div class="mb-3">
                             <div class="input-group">
-                                <input type="text" class="form-control" value="{{ result.iv }}" readonly>
+                                <input type="text" class="form-control" value="{{ result.iv }}" readonly aria-label="Vector de Inicialización">
                                 <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.iv }}" title="Copiar">📋</button>
                             </div>
-                            <small class="text-muted">
-                                Guarda este IV junto con el texto encriptado. Ambos son necesarios para desencriptar.
+                            <small class="text-danger">
+                                <strong>¡NO PIERDA ESTE VALOR!</strong> Debes guardar este IV junto con el texto encriptado. Ambos son necesarios para desencriptar.
                             </small>
                         </div>
+                        {% endif %}
 
                         <h4>Datos originales:</h4>
                         <p>{{ result.original }}</p>
                     {% endif %}
 
                     {% if result.decrypted %}
+                        <div class="alert alert-success mb-4">
+                            <h4 class="alert-heading">¡Descifrado exitoso!</h4>
+                            <p>El mensaje ha sido descifrado correctamente.</p>
+                        </div>
+                        
                         <h4>Texto Desencriptado:</h4>
                         <div class="mb-3">
                             <div class="input-group">
-                                <textarea class="form-control" rows="5" readonly>{{ result.decrypted }}</textarea>
+                                <textarea class="form-control" rows="5" readonly aria-label="Texto Desencriptado">{{ result.decrypted }}</textarea>
                                 <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.decrypted }}" title="Copiar">📋</button>
                             </div>
                         </div>
+                        
+                        {% if result.encrypted %}
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                Verificación del Texto Cifrado
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Texto cifrado utilizado:</strong></p>
+                                <p class="text-truncate">{{ result.encrypted }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% else %}
@@ -272,16 +318,233 @@
         document.querySelectorAll('.copy-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const textToCopy = this.getAttribute('data-copy');
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Cambiar el ícono temporalmente para indicar que se copió
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '✅';
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                    }, 1000);
-                });
+                const originalText = this.innerHTML;
+                const resultBox = document.querySelector('.result-box');
+                
+                // Crear elemento toast para notificación
+                const toast = document.createElement('div');
+                toast.classList.add('position-fixed', 'bottom-0', 'end-0', 'p-3');
+                toast.style.zIndex = '11';
+                
+                // Método moderno basado en promesas
+                try {
+                    // Crear área de texto temporal
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    
+                    // Intenta usar la API moderna primero
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(textToCopy)
+                            .then(() => {
+                                this.innerHTML = '✅';
+                                showSuccessMessage('Texto copiado al portapapeles');
+                                setTimeout(() => { this.innerHTML = originalText; }, 1000);
+                            })
+                            .catch(err => {
+                                // Si falla el método moderno, usar el método alternativo
+                                document.execCommand('copy');
+                                this.innerHTML = '✅';
+                                showSuccessMessage('Texto copiado al portapapeles');
+                                setTimeout(() => { this.innerHTML = originalText; }, 1000);
+                            });
+                    } else {
+                        // Para navegadores sin soporte para la API Clipboard
+                        document.execCommand('copy');
+                        this.innerHTML = '✅';
+                        showSuccessMessage('Texto copiado al portapapeles');
+                        setTimeout(() => { this.innerHTML = originalText; }, 1000);
+                    }
+                    
+                    // Limpiar
+                    document.body.removeChild(textarea);
+                } catch (err) {
+                    console.error('Error al copiar: ', err);
+                    showErrorMessage('No se pudo copiar el texto: ' + err.message);
+                }
             });
         });
+        
+        // Función para mostrar mensajes de éxito
+        function showSuccessMessage(message) {
+            // Crear un toast de Bootstrap
+            const toastContainer = document.createElement('div');
+            toastContainer.classList.add('toast-container', 'position-fixed', 'bottom-0', 'end-0', 'p-3');
+            toastContainer.style.zIndex = '11';
+            
+            const toastEl = document.createElement('div');
+            toastEl.classList.add('toast', 'show', 'bg-success', 'text-white');
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            
+            const toastBody = document.createElement('div');
+            toastBody.classList.add('toast-body', 'd-flex', 'align-items-center');
+            toastBody.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+                ${message}
+            `;
+            
+            toastEl.appendChild(toastBody);
+            toastContainer.appendChild(toastEl);
+            document.body.appendChild(toastContainer);
+            
+            // Auto-remover después de 3 segundos
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3000);
+        }
+        
+        // Función para mostrar mensajes de error
+        function showErrorMessage(message) {
+            const toastContainer = document.createElement('div');
+            toastContainer.classList.add('toast-container', 'position-fixed', 'bottom-0', 'end-0', 'p-3');
+            toastContainer.style.zIndex = '11';
+            
+            const toastEl = document.createElement('div');
+            toastEl.classList.add('toast', 'show', 'bg-danger', 'text-white');
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            
+            const toastBody = document.createElement('div');
+            toastBody.classList.add('toast-body', 'd-flex', 'align-items-center');
+            toastBody.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </svg>
+                ${message}
+            `;
+            
+            toastEl.appendChild(toastBody);
+            toastContainer.appendChild(toastEl);
+            document.body.appendChild(toastContainer);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 5000);
+        }
+
+        // Botón para transferir datos de cifrado a descifrado
+        const usarParaDescifrarBtn = document.getElementById('usarParaDescifrarBtn');
+        if (usarParaDescifrarBtn) {
+            usarParaDescifrarBtn.addEventListener('click', function() {
+                // Cambiar a la pestaña de descifrado
+                document.getElementById('decrypt-tab').click();
+                
+                // Obtener los datos encriptados
+                {% if result.encrypted and result.iv %}
+                const textoEncriptado = `{{ result.encrypted }}`;
+                const iv = `{{ result.iv }}`;
+                
+                // Rellenar los campos
+                document.getElementById('encrypted').value = textoEncriptado;
+                document.getElementById('iv').value = iv;
+                
+                // Si el modo era GCM, seleccionar ese modo
+                {% if result.mode == 'GCM' %}
+                document.getElementById('modeGCM_decrypt').checked = true;
+                {% else %}
+                document.getElementById('modeCBC_decrypt').checked = true;
+                {% endif %}
+                
+                // Si hay una contraseña guardada en sesión, usarla
+                {% if session.get('last_encryption_password') %}
+                document.getElementById('password_decrypt').value = `{{ session.get('last_encryption_password') }}`;
+                // Avanzar directamente al botón de descifrar
+                document.querySelector('#decrypt button[type="submit"]').focus();
+                {% else %}
+                // Enfocar el campo de contraseña
+                document.getElementById('password_decrypt').focus();
+                {% endif %}
+                {% endif %}
+            });
+        }
+
+        // Botón para descifrar automáticamente sin cambiar de pestaña
+        const descifrarAutomaticamenteBtn = document.getElementById('descifrarAutomaticamenteBtn');
+        if (descifrarAutomaticamenteBtn) {
+            descifrarAutomaticamenteBtn.addEventListener('click', function() {
+                // Crear un formulario temporal invisible
+                const tempForm = document.createElement('form');
+                tempForm.method = 'post';
+                tempForm.action = '/symmetric';
+                tempForm.style.display = 'none';
+                
+                // Añadir los campos necesarios
+                const actionField = document.createElement('input');
+                actionField.type = 'hidden';
+                actionField.name = 'action';
+                actionField.value = 'decrypt';
+                tempForm.appendChild(actionField);
+                
+                // Añadir el texto cifrado
+                {% if result.encrypted %}
+                const encryptedField = document.createElement('input');
+                encryptedField.type = 'hidden';
+                encryptedField.name = 'encrypted';
+                encryptedField.value = '{{ result.encrypted }}';
+                tempForm.appendChild(encryptedField);
+                {% endif %}
+                
+                // Añadir el IV
+                {% if result.iv %}
+                const ivField = document.createElement('input');
+                ivField.type = 'hidden';
+                ivField.name = 'iv';
+                ivField.value = '{{ result.iv }}';
+                tempForm.appendChild(ivField);
+                {% endif %}
+                
+                // Añadir el modo
+                {% if result.mode %}
+                const modeField = document.createElement('input');
+                modeField.type = 'hidden';
+                modeField.name = 'mode';
+                modeField.value = '{{ result.mode }}';
+                tempForm.appendChild(modeField);
+                {% endif %}
+                
+                // Añadir el algoritmo
+                const algorithmField = document.createElement('input');
+                algorithmField.type = 'hidden';
+                algorithmField.name = 'algorithm';
+                algorithmField.value = 'AES';
+                tempForm.appendChild(algorithmField);
+                
+                // Añadir la contraseña
+                {% if session.get('last_encryption_password') %}
+                const passwordField = document.createElement('input');
+                passwordField.type = 'hidden';
+                passwordField.name = 'password';
+                passwordField.value = '{{ session.get("last_encryption_password") }}';
+                tempForm.appendChild(passwordField);
+                {% else %}
+                // Si no hay contraseña guardada, solicitar al usuario
+                const password = prompt('Introduce la contraseña de cifrado:');
+                if (password) {
+                    const passwordField = document.createElement('input');
+                    passwordField.type = 'hidden';
+                    passwordField.name = 'password';
+                    passwordField.value = password;
+                    tempForm.appendChild(passwordField);
+                } else {
+                    // Si el usuario cancela, no hacer nada
+                    return;
+                }
+                {% endif %}
+                
+                // Añadir el formulario al documento y enviarlo
+                document.body.appendChild(tempForm);
+                tempForm.submit();
+            });
+        }
     </script>
 </body>
 </html> 

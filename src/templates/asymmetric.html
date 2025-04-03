@@ -226,32 +226,156 @@
             // Manejo de eventos para los botones
             document.getElementById('generateBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementById('actionInput').value = 'generate';
-                document.getElementById('encryptionForm').submit();
+                document.getElementById('actionInput').value = 'generate_keys';
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.getElementById('encryptionForm'));
+                fetch('/asymmetric', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar los campos de texto con las claves generadas
+                        document.getElementById('publicKey').value = data.public_key;
+                        document.getElementById('privateKey').value = data.private_key;
+                        
+                        // Mostrar mensaje de éxito
+                        showResult(true, "Par de claves RSA generado correctamente.");
+                    } else {
+                        // Mostrar mensaje de error
+                        showResult(false, "Error: " + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error en la comunicación con el servidor");
+                });
             });
             
             document.getElementById('encryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('actionInput').value = 'encrypt';
-                document.getElementById('encryptionForm').submit();
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.getElementById('encryptionForm'));
+                fetch('/asymmetric', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar el campo de texto cifrado
+                        document.getElementById('encrypted').value = data.encrypted;
+                        
+                        // Mostrar mensaje de éxito
+                        showResult(true, "Mensaje cifrado correctamente.");
+                    } else {
+                        // Mostrar mensaje de error
+                        showResult(false, "Error: " + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error en la comunicación con el servidor");
+                });
             });
             
             document.getElementById('decryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Verificar que haya un texto cifrado para descifrar
+                const encryptedText = document.getElementById('encrypted').value.trim();
+                if (!encryptedText) {
+                    showResult(false, "Error: No hay texto cifrado para descifrar. Primero debes cifrar un mensaje o ingresar un texto cifrado.");
+                    return;
+                }
+                
+                // Verificar que haya una clave privada
+                const privateKey = document.getElementById('privateKey').value.trim();
+                if (!privateKey) {
+                    showResult(false, "Error: No hay clave privada disponible. Genera un par de claves o ingresa una clave privada válida.");
+                    return;
+                }
+                
                 document.getElementById('actionInput').value = 'decrypt';
-                document.getElementById('encryptionForm').submit();
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.getElementById('encryptionForm'));
+                fetch('/asymmetric', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mostrar mensaje descifrado y actualizar campo de texto original
+                        document.getElementById('text').value = data.decrypted || '';
+                        
+                        // Mostrar mensaje de éxito
+                        showResult(true, "Mensaje descifrado: " + data.decrypted);
+                    } else {
+                        // Mostrar mensaje de error detallado
+                        showResult(false, "Error: " + (data.error || "No se pudo descifrar el mensaje"));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error en la comunicación con el servidor");
+                });
             });
             
+            // Función para mostrar el resultado
+            function showResult(success, message) {
+                // Crear o actualizar el contenedor de resultados
+                let resultContainer = document.querySelector('.mt-4');
+                if (!resultContainer) {
+                    resultContainer = document.createElement('div');
+                    resultContainer.className = 'mt-4';
+                    document.querySelector('.card-body').appendChild(resultContainer);
+                }
+                
+                resultContainer.innerHTML = `
+                    <div class="alert ${success ? 'alert-info' : 'alert-danger'}">
+                        <h5>Resultado:</h5>
+                        <div class="result-box">
+                            <code id="resultText">${message}</code>
+                            <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#resultText">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Reinicializar el plugin de copiado para el nuevo botón
+                new ClipboardJS('.copy-btn');
+            }
+            
             // Evento para los botones de copiado
-            document.querySelectorAll('.copy-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.copy-btn')) {
                     // Cambiar el texto del botón momentáneamente
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                    const btn = e.target.closest('.copy-btn');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
                     setTimeout(() => {
-                        this.innerHTML = originalHTML;
+                        btn.innerHTML = originalHTML;
                     }, 2000);
-                });
+                }
             });
         });
     </script>

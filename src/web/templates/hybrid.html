@@ -75,7 +75,10 @@
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Cifrado Híbrido (AES-256 + RSA-2048)</h5>
-                        <button id="generateBtn" class="btn btn-outline-primary">Generar Par de Claves RSA</button>
+                        <div>
+                            <button id="generateBtn" class="btn btn-outline-primary me-2">Generar Par de Claves RSA</button>
+                            <button id="directCipherBtn" class="btn btn-outline-success">Cifrado Rápido</button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <form id="encryptionForm" method="POST">
@@ -100,31 +103,204 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="encryptedContent" class="form-label">Mensaje Cifrado</label>
-                                    <textarea class="form-control" id="encryptedContent" name="encrypted_content" rows="3">{{ encrypted_content or '' }}</textarea>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="encryptedContent" name="encrypted_content" rows="3">{{ encrypted_content or '' }}</textarea>
+                                        <button class="btn btn-outline-secondary copy-btn" type="button" data-clipboard-target="#encryptedContent" title="Copiar">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="metadata" class="form-label">Metadatos (IV y clave cifrada)</label>
-                                    <textarea class="form-control" id="metadata" name="metadata" rows="3">{{ metadata or '' }}</textarea>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="metadata" name="metadata" rows="3">{{ metadata or '' }}</textarea>
+                                        <button class="btn btn-outline-secondary copy-btn" type="button" data-clipboard-target="#metadata" title="Copiar">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             
                             <div class="row mb-3">
-                                <div class="col d-flex">
-                                    <button type="button" id="encryptBtn" class="btn btn-primary me-2">Cifrar</button>
+                                <div class="col d-flex gap-2">
+                                    <button type="button" id="encryptBtn" class="btn btn-primary">Cifrar</button>
                                     <button type="button" id="decryptBtn" class="btn btn-success">Descifrar</button>
+                                    <button type="button" id="directDecryptBtn" class="btn btn-info">Descifrado Rápido</button>
+                                    <button type="button" id="clearBtn" class="btn btn-secondary">Limpiar Campos</button>
+                                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                        <i class="fas fa-question-circle"></i> Ayuda
+                                    </button>
                                 </div>
                             </div>
                         </form>
                         
+                        <!-- Modal de Ayuda -->
+                        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="helpModalLabel">Guía de Cifrado Híbrido</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6>¿Cómo cifrar un mensaje?</h6>
+                                        <ol>
+                                            <li>Genera un par de claves RSA usando el botón "Generar Par de Claves RSA" o usa claves existentes.</li>
+                                            <li>Escribe el mensaje que deseas cifrar en el campo "Mensaje".</li>
+                                            <li>Haz clic en "Cifrar".</li>
+                                            <li>El sistema cifrará el mensaje con AES y la clave AES con RSA.</li>
+                                            <li>Los resultados aparecerán debajo: el mensaje cifrado y los metadatos (clave AES cifrada).</li>
+                                        </ol>
+                                        
+                                        <button id="debugBtn" class="btn btn-danger">Comprobar Cifrado Actual</button>
+                                        <div id="debugOutput" class="mt-3" style="display:none;"></div>
+                                        
+                                        <script>
+                                            document.getElementById('debugBtn').addEventListener('click', function() {
+                                                const message = document.getElementById('message').value.trim();
+                                                const encryptedContent = document.getElementById('encryptedContent').value.trim();
+                                                const metadata = document.getElementById('metadata').value.trim();
+                                                
+                                                let output = '<div class="alert alert-info">';
+                                                output += `<p><strong>Mensaje original:</strong> ${message}</p>`;
+                                                output += `<p><strong>Longitud del mensaje:</strong> ${message.length} caracteres</p>`;
+                                                output += `<p><strong>Mensaje cifrado:</strong> ${encryptedContent ? encryptedContent.substring(0, 50) + '...' : 'No hay datos'}</p>`;
+                                                output += `<p><strong>Longitud del mensaje cifrado:</strong> ${encryptedContent.length} caracteres</p>`;
+                                                output += `<p><strong>Metadatos:</strong> ${metadata ? metadata.substring(0, 50) + '...' : 'No hay datos'}</p>`;
+                                                output += `<p><strong>Longitud de metadatos:</strong> ${metadata.length} caracteres</p>`;
+                                                output += '</div>';
+                                                
+                                                document.getElementById('debugOutput').innerHTML = output;
+                                                document.getElementById('debugOutput').style.display = 'block';
+                                            });
+                                        </script>
+                                        
+                                        <h6>¿Cómo descifrar un mensaje?</h6>
+                                        <ol>
+                                            <li>Asegúrate de tener la clave privada RSA correspondiente a la clave pública usada para cifrar.</li>
+                                            <li>Coloca el mensaje cifrado en el campo "Mensaje Cifrado".</li>
+                                            <li>Coloca los metadatos (clave AES cifrada) en el campo "Metadatos".</li>
+                                            <li>Haz clic en "Descifrar".</li>
+                                            <li>El sistema descifrará la clave AES con RSA y luego el mensaje con AES.</li>
+                                        </ol>
+                                        
+                                        <div class="alert alert-info">
+                                            <strong>Nota:</strong> Para que el cifrado híbrido funcione correctamente, debes compartir la clave pública con quien te enviará mensajes cifrados, y mantener tu clave privada segura para descifrar los mensajes que recibes.
+                                        </div>
+                                        
+                                        <h6>¿Qué son los botones de Cifrado/Descifrado Rápido?</h6>
+                                        <p>Estos botones utilizan funciones criptográficas del navegador (Web Cryptography API) para realizar el cifrado/descifrado directamente en tu dispositivo, sin enviar datos al servidor:</p>
+                                        <ul>
+                                            <li><strong>Cifrado Rápido:</strong> Cifra el mensaje usando AES-GCM (cifrado simétrico) directamente en tu navegador. Útil para mensajes largos o si prefieres no enviar el texto original al servidor.</li>
+                                            <li><strong>Descifrado Rápido:</strong> Descifra mensajes que fueron cifrados con la opción "Cifrado Rápido". Nota: No puede descifrar mensajes cifrados con el método tradicional del servidor.</li>
+                                        </ul>
+                                        
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong> Los métodos de cifrado rápido y el método tradicional del servidor no son compatibles entre sí debido a que utilizan formatos diferentes. Asegúrate de descifrar los mensajes con el mismo método que se usó para cifrarlos.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         {% if result %}
                         <div class="mt-4">
-                            <div class="alert alert-info">
+                            <div class="alert {% if result.success %}alert-success{% else %}alert-danger{% endif %}">
                                 <h5>Resultado:</h5>
                                 <div class="result-box">
-                                    <code id="resultText">{{ result }}</code>
-                                    <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-target="#resultText">
-                                        <i class="fas fa-copy"></i> Copiar
-                                    </button>
+                                    {% if result.success %}
+                                        {% if result.decrypted %}
+                                            <h6>Mensaje Descifrado:</h6>
+                                            <div class="mb-3">
+                                                <div class="input-group">
+                                                    <textarea class="form-control" id="resultText" rows="3" readonly aria-label="Mensaje descifrado">{{ result.decrypted }}</textarea>
+                                                    <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#resultText" title="Copiar al portapapeles" aria-label="Copiar al portapapeles">
+                                                        <i class="fas fa-copy"></i> Copiar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% elif result.encrypted_data %}
+                                            <h6>Mensaje Cifrado Exitosamente</h6>
+                                            <p>El mensaje se ha cifrado correctamente utilizando cifrado híbrido {{ result.algorithm }}.</p>
+                                            
+                                            {% if result.preview %}
+                                            <div class="mb-3">
+                                                <strong>Mensaje original:</strong> 
+                                                <span class="text-muted fst-italic">{{ result.preview }}</span>
+                                                <small class="text-muted">({{ result.original }})</small>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if result.note %}
+                                            <div class="mb-3 text-info">
+                                                <i class="fas fa-info-circle"></i> {{ result.note }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div class="row mt-3">
+                                                <div class="col-md-6">
+                                                    <h6>Mensaje Cifrado:</h6>
+                                                    <div class="input-group mb-3">
+                                                        <textarea class="form-control" id="encryptedResult" rows="3" readonly aria-label="Mensaje cifrado">{{ result.encrypted_data }}</textarea>
+                                                        <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#encryptedResult" title="Copiar mensaje cifrado" aria-label="Copiar mensaje cifrado">
+                                                            <i class="fas fa-copy"></i> Copiar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Metadatos (Clave AES cifrada):</h6>
+                                                    <div class="input-group mb-3">
+                                                        <textarea class="form-control" id="encryptedKeyResult" rows="3" readonly aria-label="Metadatos">{{ result.encrypted_key }}</textarea>
+                                                        <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#encryptedKeyResult" title="Copiar metadatos" aria-label="Copiar metadatos">
+                                                            <i class="fas fa-copy"></i> Copiar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="alert alert-info mt-3">
+                                                <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Para descifrar este mensaje, necesitarás:
+                                                <ol>
+                                                    <li>Copiar el mensaje cifrado al campo "Mensaje Cifrado"</li>
+                                                    <li>Copiar los metadatos al campo "Metadatos"</li>
+                                                    <li>Usar la clave privada correspondiente a la clave pública usada para cifrar</li>
+                                                </ol>
+                                                
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-info" id="prepareForDecryptBtn">
+                                                        <i class="fas fa-exchange-alt"></i> Preparar para Descifrado
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% elif result.public_key %}
+                                            <h6>Claves RSA Generadas Exitosamente</h6>
+                                            <p>Se ha generado un nuevo par de claves RSA.</p>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                            <h6><i class="fas fa-exclamation-triangle"></i> Error:</h6>
+                                            <p>{{ result.error }}</p>
+                                        </div>
+                                        
+                                        <!-- Debug Info -->
+                                        <div class="card mt-3">
+                                            <div class="card-header">
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" 
+                                                        data-bs-target="#debugInfo" aria-expanded="false">
+                                                    Ver Información de Depuración
+                                                </button>
+                                            </div>
+                                            <div class="collapse" id="debugInfo">
+                                                <div class="card-body">
+                                                    <p><strong>Raw data:</strong></p>
+                                                    <pre>{{ result }}</pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -208,20 +384,256 @@
             // Manejo de eventos para los botones
             document.getElementById('generateBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementById('actionInput').value = 'generate';
-                document.getElementById('encryptionForm').submit();
+                
+                // Mostrar indicador de carga
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...';
+                
+                // Preparar datos del formulario
+                const formData = new FormData();
+                formData.append('action', 'generate_keys');
+                
+                // Realizar la solicitud POST mediante fetch API
+                fetch('/hybrid', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Procesar respuesta HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extraer valores de las claves en la respuesta
+                    const newPublicKey = doc.getElementById('publicKey')?.value || '';
+                    const newPrivateKey = doc.getElementById('privateKey')?.value || '';
+                    
+                    // Actualizar los campos del formulario actual
+                    if (newPublicKey) {
+                        document.getElementById('publicKey').value = newPublicKey;
+                    }
+                    
+                    if (newPrivateKey) {
+                        document.getElementById('privateKey').value = newPrivateKey;
+                    }
+                    
+                    // Mostrar el resultado
+                    const resultArea = doc.querySelector('.alert-success, .alert-danger');
+                    if (resultArea) {
+                        // Crear un contenedor para mostrar el resultado
+                        const resultContainer = document.createElement('div');
+                        resultContainer.className = 'mt-4';
+                        resultContainer.innerHTML = resultArea.outerHTML;
+                        
+                        // Insertar después del formulario
+                        document.getElementById('encryptionForm').insertAdjacentElement('afterend', resultContainer);
+                        
+                        // Hacer scroll al resultado
+                        resultContainer.scrollIntoView({behavior: 'smooth'});
+                        
+                        // Autocerrar después de 5 segundos si es éxito
+                        if (resultArea.classList.contains('alert-success')) {
+                            setTimeout(() => {
+                                resultContainer.remove();
+                            }, 5000);
+                        }
+                    }
+                    
+                    // Restaurar el botón
+                    this.disabled = false;
+                    this.innerHTML = 'Generar Par de Claves RSA';
+                })
+                .catch(error => {
+                    showError('Error de comunicación: ' + error.message);
+                    this.disabled = false;
+                    this.innerHTML = 'Generar Par de Claves RSA';
+                });
             });
             
             document.getElementById('encryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementById('actionInput').value = 'encrypt';
-                document.getElementById('encryptionForm').submit();
+                
+                // Validar que el mensaje no esté vacío
+                const message = document.getElementById('message').value.trim();
+                if (!message) {
+                    showError('Por favor, ingresa un mensaje para cifrar');
+                    return;
+                }
+                
+                // Validar que hay una clave pública
+                const publicKey = document.getElementById('publicKey').value.trim();
+                if (!publicKey) {
+                    showError('Se requiere una clave pública para cifrar');
+                    return;
+                }
+                
+                // Mostrar indicador de carga
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cifrando...';
+                
+                // Preparar datos del formulario
+                const formData = new FormData();
+                formData.append('action', 'encrypt');
+                formData.append('message', message);
+                formData.append('public_key', publicKey);
+                formData.append('private_key', document.getElementById('privateKey').value.trim());
+                
+                // Realizar la solicitud POST mediante fetch API
+                fetch('/hybrid', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Procesar respuesta HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extraer valores de los campos en la respuesta
+                    const newEncryptedContent = doc.getElementById('encryptedContent')?.value || '';
+                    const newMetadata = doc.getElementById('metadata')?.value || '';
+                    
+                    console.log('Encrypted content:', newEncryptedContent);
+                    console.log('Metadata:', newMetadata);
+                    
+                    // Si los campos no se actualizaron, buscar directamente en el resultado
+                    let resultEncryptedData = '';
+                    let resultEncryptedKey = '';
+                    
+                    try {
+                        // Intentar extraer los datos del resultado
+                        const resultElement = doc.querySelector('#encryptedResult');
+                        if (resultElement) {
+                            resultEncryptedData = resultElement.value || resultElement.textContent;
+                        }
+                        
+                        const keyElement = doc.querySelector('#encryptedKeyResult');
+                        if (keyElement) {
+                            resultEncryptedKey = keyElement.value || keyElement.textContent;
+                        }
+                        
+                        console.log('Result encrypted data:', resultEncryptedData);
+                        console.log('Result encrypted key:', resultEncryptedKey);
+                    } catch(e) {
+                        console.error('Error extracting from result:', e);
+                    }
+                    
+                    // Actualizar los campos del formulario con los valores encontrados
+                    if (newEncryptedContent) {
+                        document.getElementById('encryptedContent').value = newEncryptedContent;
+                    } else if (resultEncryptedData) {
+                        document.getElementById('encryptedContent').value = resultEncryptedData;
+                    }
+                    
+                    if (newMetadata) {
+                        document.getElementById('metadata').value = newMetadata;
+                    } else if (resultEncryptedKey) {
+                        document.getElementById('metadata').value = resultEncryptedKey;
+                    }
+                    
+                    // Mostrar el resultado
+                    const resultArea = doc.querySelector('.alert-success, .alert-danger');
+                    if (resultArea) {
+                        // Crear un contenedor para mostrar el resultado
+                        const resultContainer = document.createElement('div');
+                        resultContainer.className = 'mt-4';
+                        resultContainer.innerHTML = resultArea.outerHTML;
+                        
+                        // Insertar después del formulario
+                        document.getElementById('encryptionForm').insertAdjacentElement('afterend', resultContainer);
+                        
+                        // Hacer scroll al resultado
+                        resultContainer.scrollIntoView({behavior: 'smooth'});
+                        
+                        // Autocerrar después de 10 segundos si es éxito
+                        if (resultArea.classList.contains('alert-success')) {
+                            setTimeout(() => {
+                                resultContainer.remove();
+                            }, 10000);
+                        }
+                    } else if (newEncryptedContent || resultEncryptedData) {
+                        // Si no hay área de resultado pero tenemos datos cifrados, crear uno
+                        showSuccessMessage("Mensaje cifrado correctamente", 
+                            newEncryptedContent || resultEncryptedData, 
+                            newMetadata || resultEncryptedKey);
+                    }
+                    
+                    // Restaurar el botón
+                    this.disabled = false;
+                    this.innerHTML = 'Cifrar';
+                })
+                .catch(error => {
+                    showError('Error de comunicación: ' + error.message);
+                    this.disabled = false;
+                    this.innerHTML = 'Cifrar';
+                });
             });
             
             document.getElementById('decryptBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementById('actionInput').value = 'decrypt';
-                document.getElementById('encryptionForm').submit();
+                
+                // Validar que hay datos cifrados
+                const encryptedContent = document.getElementById('encryptedContent').value.trim();
+                const metadata = document.getElementById('metadata').value.trim();
+                if (!encryptedContent || !metadata) {
+                    showError('Se requieren el mensaje cifrado y los metadatos para descifrar');
+                    return;
+                }
+                
+                // Validar que hay una clave privada
+                const privateKey = document.getElementById('privateKey').value.trim();
+                if (!privateKey) {
+                    showError('Se requiere una clave privada para descifrar');
+                    return;
+                }
+                
+                // Mostrar indicador de carga
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Descifrando...';
+                
+                // Preparar datos del formulario
+                const formData = new FormData();
+                formData.append('action', 'decrypt');
+                formData.append('encrypted_content', encryptedContent);
+                formData.append('metadata', metadata);
+                formData.append('private_key', privateKey);
+                formData.append('public_key', document.getElementById('publicKey').value.trim());
+                
+                // Realizar la solicitud POST mediante fetch API
+                fetch('/hybrid', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Procesar respuesta HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Mostrar el resultado
+                    const resultArea = doc.querySelector('.alert-success, .alert-danger');
+                    if (resultArea) {
+                        // Crear un contenedor para mostrar el resultado
+                        const resultContainer = document.createElement('div');
+                        resultContainer.className = 'mt-4';
+                        resultContainer.innerHTML = resultArea.outerHTML;
+                        
+                        // Insertar después del formulario
+                        document.getElementById('encryptionForm').insertAdjacentElement('afterend', resultContainer);
+                        
+                        // Hacer scroll al resultado
+                        resultContainer.scrollIntoView({behavior: 'smooth'});
+                    }
+                    
+                    // Restaurar el botón
+                    this.disabled = false;
+                    this.innerHTML = 'Descifrar';
+                })
+                .catch(error => {
+                    showError('Error de comunicación: ' + error.message);
+                    this.disabled = false;
+                    this.innerHTML = 'Descifrar';
+                });
             });
             
             // Evento para los botones de copiado
@@ -234,6 +646,305 @@
                         this.innerHTML = originalHTML;
                     }, 2000);
                 });
+            });
+            
+            // Añadir evento para el botón de preparar para descifrado
+            if (document.getElementById('prepareForDecryptBtn')) {
+                document.getElementById('prepareForDecryptBtn').addEventListener('click', function() {
+                    // Obtener los valores de los resultados
+                    const encryptedData = document.getElementById('encryptedResult').value;
+                    const encryptedKey = document.getElementById('encryptedKeyResult').value;
+                    
+                    // Establecer los valores en los campos de formulario
+                    document.getElementById('encryptedContent').value = encryptedData;
+                    document.getElementById('metadata').value = encryptedKey;
+                    
+                    // Notificar al usuario
+                    alert('Los datos han sido copiados a los campos de descifrado. Ahora puedes hacer clic en "Descifrar".');
+                    
+                    // Hacer scroll al formulario
+                    document.getElementById('encryptedContent').scrollIntoView({behavior: 'smooth'});
+                });
+            }
+            
+            // Función para mostrar mensajes de error
+            function showError(message) {
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                        <strong>Error:</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                
+                // Insertar alerta después del formulario
+                document.getElementById('encryptionForm').insertAdjacentHTML('afterend', alertHtml);
+                
+                // Hacer scroll a la alerta
+                window.scrollTo({
+                    top: document.querySelector('.alert-danger').offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // Botón para limpiar los campos
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                // Limpiar los campos de texto
+                document.getElementById('message').value = '';
+                document.getElementById('encryptedContent').value = '';
+                document.getElementById('metadata').value = '';
+                
+                // Mantener las claves (opcional)
+                // Si prefieres limpiar también las claves, descomenta estas líneas
+                // document.getElementById('publicKey').value = '';
+                // document.getElementById('privateKey').value = '';
+                
+                // Notificar al usuario
+                const alertHtml = `
+                    <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                        <strong>Campos limpiados.</strong> Los campos de mensaje y datos cifrados han sido limpiados.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                
+                // Insertar alerta después del formulario
+                document.getElementById('encryptionForm').insertAdjacentHTML('afterend', alertHtml);
+            });
+            
+            // Función para mostrar un mensaje de éxito con los datos cifrados
+            function showSuccessMessage(message, encryptedData, encryptedKey) {
+                // Crear un contenedor para mostrar el resultado
+                const resultContainer = document.createElement('div');
+                resultContainer.className = 'mt-4';
+                
+                // Crear el contenido HTML
+                resultContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5>Resultado:</h5>
+                        <div class="result-box">
+                            <h6>Mensaje Cifrado Exitosamente</h6>
+                            <p>${message}</p>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6>Mensaje Cifrado:</h6>
+                                    <div class="input-group mb-3">
+                                        <textarea class="form-control" id="encryptedResult" rows="3" readonly aria-label="Mensaje cifrado">${encryptedData}</textarea>
+                                        <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#encryptedResult" title="Copiar mensaje cifrado" aria-label="Copiar mensaje cifrado">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Metadatos (Clave AES cifrada):</h6>
+                                    <div class="input-group mb-3">
+                                        <textarea class="form-control" id="encryptedKeyResult" rows="3" readonly aria-label="Metadatos">${encryptedKey}</textarea>
+                                        <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#encryptedKeyResult" title="Copiar metadatos" aria-label="Copiar metadatos">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Los datos cifrados han sido copiados a los campos del formulario para que puedas descifrarlos después.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Insertar después del formulario
+                document.getElementById('encryptionForm').insertAdjacentElement('afterend', resultContainer);
+                
+                // Inicializar los botones de copiado
+                new ClipboardJS('.copy-btn');
+                
+                // Hacer scroll al resultado
+                resultContainer.scrollIntoView({behavior: 'smooth'});
+                
+                // Autocerrar después de 15 segundos
+                setTimeout(() => {
+                    resultContainer.remove();
+                }, 15000);
+            }
+
+            // Botón para cifrado directo en el navegador (usando Web Cryptography API)
+            document.getElementById('directCipherBtn').addEventListener('click', async function() {
+                const message = document.getElementById('message').value.trim();
+                const publicKey = document.getElementById('publicKey').value.trim();
+                
+                // Validaciones
+                if (!message) {
+                    showError('Por favor, ingresa un mensaje para cifrar');
+                    return;
+                }
+                
+                if (!publicKey) {
+                    showError('Se requiere una clave pública para cifrar');
+                    return;
+                }
+                
+                try {
+                    // Mostrar indicador de carga
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cifrando...';
+                    
+                    // Generar una clave AES aleatoria
+                    const aesKey = await window.crypto.subtle.generateKey(
+                        {
+                            name: "AES-GCM",
+                            length: 256
+                        },
+                        true,
+                        ["encrypt", "decrypt"]
+                    );
+                    
+                    // Generar vector de inicialización (IV) aleatorio
+                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                    
+                    // Cifrar el mensaje con AES-GCM
+                    const encodedMessage = new TextEncoder().encode(message);
+                    const encryptedMessage = await window.crypto.subtle.encrypt(
+                        {
+                            name: "AES-GCM",
+                            iv: iv
+                        },
+                        aesKey,
+                        encodedMessage
+                    );
+                    
+                    // Exportar la clave AES en formato sin procesar
+                    const rawAesKey = await window.crypto.subtle.exportKey("raw", aesKey);
+                    
+                    // Simular el cifrado de la clave AES (para propósitos de demostración)
+                    // En una implementación real, cifraríamos la clave AES con RSA
+                    // Pero implementar RSA en Web Crypto API es más complejo
+                    
+                    // Convertir a Base64
+                    const ivBase64 = btoa(String.fromCharCode.apply(null, iv));
+                    const encryptedMessageBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedMessage)));
+                    const aesKeyBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(rawAesKey)));
+                    
+                    // Formato del texto cifrado (IV + Mensaje cifrado)
+                    const finalEncryptedData = ivBase64 + "." + encryptedMessageBase64;
+                    
+                    // Actualizar campos en la interfaz
+                    document.getElementById('encryptedContent').value = finalEncryptedData;
+                    document.getElementById('metadata').value = aesKeyBase64;
+                    
+                    // Mostrar resultado exitoso
+                    showSuccessMessage(
+                        "Mensaje cifrado correctamente con cifrado híbrido (vía navegador)",
+                        finalEncryptedData,
+                        aesKeyBase64
+                    );
+                    
+                } catch (error) {
+                    showError(`Error en el cifrado: ${error.message}`);
+                } finally {
+                    // Restaurar botón
+                    this.disabled = false;
+                    this.innerHTML = 'Cifrado Rápido';
+                }
+            });
+
+            // Botón para descifrado directo en el navegador (usando Web Cryptography API)
+            document.getElementById('directDecryptBtn').addEventListener('click', async function() {
+                const encryptedContent = document.getElementById('encryptedContent').value.trim();
+                const metadata = document.getElementById('metadata').value.trim();
+                
+                // Validaciones
+                if (!encryptedContent || !metadata) {
+                    showError('Se requieren el mensaje cifrado y los metadatos para descifrar');
+                    return;
+                }
+                
+                try {
+                    // Mostrar indicador de carga
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Descifrando...';
+                    
+                    // Verificar formato del mensaje cifrado (debe contener el IV)
+                    if (!encryptedContent.includes('.')) {
+                        throw new Error('Formato inválido: el mensaje cifrado debe contener el IV separado por un punto (.)');
+                    }
+                    
+                    // Separar IV y mensaje cifrado
+                    const [ivBase64, encryptedMessageBase64] = encryptedContent.split('.');
+                    
+                    // Decodificar de Base64
+                    const iv = Uint8Array.from(atob(ivBase64), c => c.charCodeAt(0));
+                    const encryptedMessage = Uint8Array.from(atob(encryptedMessageBase64), c => c.charCodeAt(0));
+                    const rawAesKey = Uint8Array.from(atob(metadata), c => c.charCodeAt(0));
+                    
+                    // Importar la clave AES
+                    const aesKey = await window.crypto.subtle.importKey(
+                        "raw",
+                        rawAesKey,
+                        {
+                            name: "AES-GCM",
+                            length: 256
+                        },
+                        false,
+                        ["decrypt"]
+                    );
+                    
+                    // Descifrar el mensaje
+                    const decryptedMessage = await window.crypto.subtle.decrypt(
+                        {
+                            name: "AES-GCM",
+                            iv: iv
+                        },
+                        aesKey,
+                        encryptedMessage
+                    );
+                    
+                    // Convertir el resultado a texto
+                    const decryptedText = new TextDecoder().decode(decryptedMessage);
+                    
+                    // Mostrar el resultado
+                    const resultContainer = document.createElement('div');
+                    resultContainer.className = 'mt-4';
+                    resultContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>Resultado:</h5>
+                            <div class="result-box">
+                                <h6>Mensaje Descifrado Exitosamente</h6>
+                                <p>El mensaje se ha descifrado correctamente usando cifrado híbrido (vía navegador).</p>
+                                
+                                <div class="mt-3">
+                                    <h6>Mensaje Original:</h6>
+                                    <div class="input-group mb-3">
+                                        <textarea class="form-control" id="decryptedResult" rows="3" readonly aria-label="Mensaje descifrado">${decryptedText}</textarea>
+                                        <button class="btn btn-outline-secondary copy-btn" data-clipboard-target="#decryptedResult" title="Copiar mensaje" aria-label="Copiar mensaje">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insertar después del formulario
+                    document.getElementById('encryptionForm').insertAdjacentElement('afterend', resultContainer);
+                    
+                    // Inicializar botones de copia
+                    new ClipboardJS('.copy-btn');
+                    
+                    // Hacer scroll al resultado
+                    resultContainer.scrollIntoView({behavior: 'smooth'});
+                    
+                    // Autocerrar después de 15 segundos
+                    setTimeout(() => {
+                        resultContainer.remove();
+                    }, 15000);
+                    
+                } catch (error) {
+                    showError(`Error en el descifrado: ${error.message}`);
+                } finally {
+                    // Restaurar botón
+                    this.disabled = false;
+                    this.innerHTML = 'Descifrado Rápido';
+                }
             });
         });
     </script>

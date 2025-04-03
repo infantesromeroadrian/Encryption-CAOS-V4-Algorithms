@@ -93,7 +93,7 @@
                             
                             <div class="mb-3">
                                 <label for="message" class="form-label">Mensaje</label>
-                                <textarea class="form-control" id="message" name="message" rows="3" required>{{ message or '' }}</textarea>
+                                <textarea class="form-control" id="message" name="text" rows="3" required>{{ message or '' }}</textarea>
                             </div>
                             
                             <div class="mb-3">
@@ -180,20 +180,123 @@
             // Manejo de eventos para los botones
             document.getElementById('generateBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementById('actionInput').value = 'generate';
-                document.querySelector('form').submit();
+                document.getElementById('actionInput').value = 'generate_keys';
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.querySelector('form'));
+                fetch('/digital_signature', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar los campos de texto con las claves generadas
+                        document.getElementById('publicKey').value = data.public_key || '';
+                        document.getElementById('privateKey').value = data.private_key || '';
+                        
+                        // Mostrar mensaje de éxito
+                        showResult(true, "Par de claves RSA generado correctamente", "Las claves para firmar y verificar han sido generadas con éxito.");
+                    } else {
+                        // Mostrar mensaje de error
+                        showResult(false, "Error al generar claves", data.error || "No se pudieron generar las claves");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error", "Error en la comunicación con el servidor");
+                });
             });
             
             document.getElementById('signBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('actionInput').value = 'sign';
-                document.querySelector('form').submit();
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.querySelector('form'));
+                fetch('/digital_signature', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar el campo de firma
+                        document.getElementById('signature').value = data.signature || '';
+                        
+                        // Mostrar mensaje de éxito
+                        showResult(true, "Mensaje firmado correctamente", "La firma digital ha sido generada con éxito.");
+                    } else {
+                        // Mostrar mensaje de error
+                        showResult(false, "Error al firmar", data.error || "No se pudo firmar el mensaje");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error", "Error en la comunicación con el servidor");
+                });
             });
             
             document.getElementById('verifyBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('actionInput').value = 'verify';
-                document.querySelector('form').submit();
+                
+                // Verificar que haya un mensaje y una firma
+                const message = document.getElementById('message').value.trim();
+                const signature = document.getElementById('signature').value.trim();
+                const publicKey = document.getElementById('publicKey').value.trim();
+                
+                if (!message) {
+                    showResult(false, "Error", "No hay mensaje para verificar. Por favor, introduce un mensaje.");
+                    return;
+                }
+                
+                if (!signature) {
+                    showResult(false, "Error", "No hay firma para verificar. Primero debes firmar un mensaje o ingresar una firma válida.");
+                    return;
+                }
+                
+                if (!publicKey) {
+                    showResult(false, "Error", "No hay clave pública disponible. Genera un par de claves o ingresa una clave pública válida.");
+                    return;
+                }
+                
+                // Enviar formulario por AJAX
+                const formData = new FormData(document.querySelector('form'));
+                fetch('/digital_signature', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mostrar resultado de la verificación
+                        if (data.valid) {
+                            showResult(true, "Firma válida", "La firma digital ha sido verificada correctamente y es válida.");
+                        } else {
+                            showResult(false, "Firma inválida", "La firma digital no coincide con el mensaje o la clave pública proporcionada.");
+                        }
+                    } else {
+                        // Mostrar mensaje de error
+                        showResult(false, "Error al verificar", data.error || "No se pudo verificar la firma");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showResult(false, "Error", "Error en la comunicación con el servidor");
+                });
             });
             
             // Evento para los botones de copiado
@@ -207,6 +310,26 @@
                     }, 2000);
                 });
             });
+            
+            // Función para mostrar el resultado
+            function showResult(success, title, message) {
+                // Crear o actualizar el contenedor de resultados
+                let resultContainer = document.querySelector('.mt-4');
+                if (!resultContainer) {
+                    resultContainer = document.createElement('div');
+                    resultContainer.className = 'mt-4';
+                    document.querySelector('.card-body').appendChild(resultContainer);
+                }
+                
+                resultContainer.innerHTML = `
+                    <div class="alert ${success ? 'alert-success' : 'alert-danger'}">
+                        <h5>
+                            ${success ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'} ${title}
+                        </h5>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>

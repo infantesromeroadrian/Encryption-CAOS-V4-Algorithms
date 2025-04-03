@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado RSA - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .key-box {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .result-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .copy-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="bi bi-house"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/symmetric">
+                                <i class="bi bi-lock"></i> Cifrado Simétrico
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/asymmetric">
+                                <i class="bi bi-key"></i> Cifrado Asimétrico
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hybrid">
+                                <i class="bi bi-shuffle"></i> Cifrado Híbrido
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hash">
+                                <i class="bi bi-hash"></i> Funciones Hash
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/digital_signature">
+                                <i class="bi bi-pen"></i> Firmas Digitales
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/benchmark">
+                                <i class="bi bi-speedometer"></i> Benchmark
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Cifrado RSA</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="{{ url_for('asymmetric.asymmetric_index') }}" class="btn btn-sm btn-outline-secondary">
+                                Volver a Cifrado Asimétrico
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>¡Importante!</strong> Primero genera un par de claves antes de intentar cifrar o descifrar.
+                    La clave pública se usa para cifrar y la privada para descifrar.
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="keys-tab" data-bs-toggle="tab" data-bs-target="#keys" type="button" role="tab" aria-controls="keys" aria-selected="true">Generar Claves</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="encrypt-tab" data-bs-toggle="tab" data-bs-target="#encrypt" type="button" role="tab" aria-controls="encrypt" aria-selected="false">Cifrar</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="decrypt-tab" data-bs-toggle="tab" data-bs-target="#decrypt" type="button" role="tab" aria-controls="decrypt" aria-selected="false">Descifrar</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="myTabContent">
+                            <!-- Generación de Claves -->
+                            <div class="tab-pane fade show active" id="keys" role="tabpanel" aria-labelledby="keys-tab">
+                                <p class="mb-3">
+                                    Genera un nuevo par de claves RSA. La clave pública se puede compartir,
+                                    pero la clave privada debe mantenerse segura.
+                                </p>
+                                <form id="generateForm">
+                                    <div class="row mb-3">
+                                        <label for="key_size" class="col-sm-2 col-form-label">Tamaño de clave:</label>
+                                        <div class="col-sm-4">
+                                            <select class="form-select" id="key_size" name="key_size">
+                                                <option value="2048" selected>2048 bits (Recomendado)</option>
+                                                <option value="3072">3072 bits (Alta seguridad)</option>
+                                                <option value="4096">4096 bits (Máxima seguridad)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="generateKeysBtn">Generar Par de Claves RSA</button>
+                                </form>
+                            </div>
+
+                            <!-- Formulario de Cifrado -->
+                            <div class="tab-pane fade" id="encrypt" role="tabpanel" aria-labelledby="encrypt-tab">
+                                <p class="mb-3">
+                                    Cifra un mensaje utilizando la clave pública RSA. 
+                                    <strong>Nota:</strong> RSA tiene límites en el tamaño del texto que puede cifrar directamente.
+                                    Para textos largos, usa cifrado híbrido.
+                                </p>
+                                <form id="encryptForm">
+                                    <div class="mb-3">
+                                        <label for="plaintext" class="form-label">Texto a cifrar:</label>
+                                        <textarea class="form-control" id="plaintext" name="plaintext" rows="3" required placeholder="Ingresa el texto que deseas cifrar..."></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="public_key_encrypt" class="form-label">Clave Pública (PEM):</label>
+                                        <textarea class="form-control" id="public_key_encrypt" name="public_key" rows="8" required placeholder="Pega aquí la clave pública en formato PEM..."></textarea>
+                                    </div>
+
+                                    <button type="button" class="btn btn-primary" id="encryptBtn">Cifrar</button>
+                                </form>
+                            </div>
+
+                            <!-- Formulario de Descifrado -->
+                            <div class="tab-pane fade" id="decrypt" role="tabpanel" aria-labelledby="decrypt-tab">
+                                <p class="mb-3">
+                                    Descifra un mensaje utilizando la clave privada RSA.
+                                </p>
+                                <form id="decryptForm">
+                                    <div class="mb-3">
+                                        <label for="ciphertext" class="form-label">Texto cifrado (Base64):</label>
+                                        <textarea class="form-control" id="ciphertext" name="ciphertext" rows="3" required placeholder="Ingresa el texto cifrado en formato Base64..."></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="private_key_decrypt" class="form-label">Clave Privada (PEM):</label>
+                                        <textarea class="form-control" id="private_key_decrypt" name="private_key" rows="8" required placeholder="Pega aquí la clave privada en formato PEM..."></textarea>
+                                    </div>
+
+                                    <button type="button" class="btn btn-primary" id="decryptBtn">Descifrar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                <div id="results" class="result-box" style="display:none;">
+                    <h3 id="resultTitle">Resultados</h3>
+                    <div id="resultContent"></div>
+                </div>
+
+                <!-- Información sobre RSA -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Acerca del Cifrado RSA</span>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#diagnosticTools" aria-expanded="false" aria-controls="diagnosticTools">
+                            <i class="bi bi-tools"></i> Herramientas de Diagnóstico
+                        </button>
+                    </div>
+                    
+                    <div class="collapse" id="diagnosticTools">
+                        <div class="card-body bg-light border-bottom">
+                            <h5>Herramientas de Diagnóstico</h5>
+                            <p class="text-muted">
+                                Estas herramientas te ayudarán a diagnosticar problemas con el cifrado o descifrado RSA.
+                            </p>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header">Verificar Par de Claves</div>
+                                <div class="card-body">
+                                    <p>
+                                        Verifica si una clave pública y una clave privada corresponden entre sí. 
+                                        Si no corresponden, no podrás descifrar correctamente los mensajes.
+                                    </p>
+                                    
+                                    <form id="verifyKeysForm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="verify_public_key" class="form-label">Clave Pública:</label>
+                                                <textarea class="form-control" id="verify_public_key" rows="6" placeholder="Pega aquí la clave pública en formato PEM..."></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="verify_private_key" class="form-label">Clave Privada:</label>
+                                                <textarea class="form-control" id="verify_private_key" rows="6" placeholder="Pega aquí la clave privada en formato PEM..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-primary" id="verifyKeysBtn">Verificar Correspondencia</button>
+                                        </div>
+                                    </form>
+                                    
+                                    <div id="verifyResult" class="mt-3" style="display:none;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header">Consejos para Solucionar Problemas Comunes</div>
+                                <div class="card-body">
+                                    <h6>1. Problema: Error al descifrar</h6>
+                                    <ul>
+                                        <li>Verifica que estás utilizando la clave privada que corresponde a la clave pública utilizada para cifrar.</li>
+                                        <li>Asegúrate de que el texto cifrado no ha sido modificado o corrupto durante su transmisión.</li>
+                                        <li>Comprueba que el formato de las claves es correcto (debe incluir las cabeceras BEGIN/END).</li>
+                                    </ul>
+                                    
+                                    <h6>2. Problema: Error al cifrar texto largo</h6>
+                                    <ul>
+                                        <li>RSA tiene limitaciones en el tamaño del texto que puede cifrar directamente (normalmente menos de 245 bytes para RSA-2048).</li>
+                                        <li>Para textos largos, utiliza el cifrado híbrido en la sección correspondiente.</li>
+                                    </ul>
+                                    
+                                    <h6>3. Problema: Formato de clave inválido</h6>
+                                    <ul>
+                                        <li>Las claves deben estar en formato PEM con las cabeceras correctas.</li>
+                                        <li>Para clave pública: BEGIN PUBLIC KEY o BEGIN RSA PUBLIC KEY</li>
+                                        <li>Para clave privada: BEGIN PRIVATE KEY o BEGIN RSA PRIVATE KEY</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">¿Cómo funciona RSA?</h5>
+                        <p class="card-text">
+                            RSA (Rivest-Shamir-Adleman) es un algoritmo de cifrado asimétrico basado en la factorización de números primos grandes.
+                            El proceso simplificado es:
+                        </p>
+                        <ol>
+                            <li>Generación de claves:
+                                <ul>
+                                    <li>Se eligen dos números primos grandes diferentes, p y q.</li>
+                                    <li>Se calcula n = p × q (esto forma parte de ambas claves).</li>
+                                    <li>Se calcula la función totiente φ(n) = (p-1) × (q-1).</li>
+                                    <li>Se elige un entero e tal que 1 < e < φ(n) y coprimo con φ(n).</li>
+                                    <li>Se calcula d tal que (d × e) mod φ(n) = 1.</li>
+                                </ul>
+                                La clave pública es (n, e) y la clave privada es (n, d).
+                            </li>
+                            <li>Cifrado: Para un mensaje m, el texto cifrado c se calcula como: c = m<sup>e</sup> mod n</li>
+                            <li>Descifrado: Para recuperar el mensaje, se calcula: m = c<sup>d</sup> mod n</li>
+                        </ol>
+                        
+                        <h5 class="card-title mt-3">Ventajas de RSA</h5>
+                        <ul>
+                            <li>Seguridad basada en el problema de factorización de enteros.</li>
+                            <li>Ampliamente estudiado y desplegado en sistemas de seguridad.</li>
+                            <li>Perfecto para intercambio seguro de claves y firmas digitales.</li>
+                        </ul>
+                        
+                        <h5 class="card-title mt-3">Limitaciones</h5>
+                        <ul>
+                            <li>Operaciones matemáticas complejas hacen que sea relativamente lento.</li>
+                            <li>Limitado en el tamaño de datos que puede cifrar (máximo n-1).</li>
+                            <li>Requiere claves más largas que ECC para el mismo nivel de seguridad.</li>
+                        </ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si las claves corresponden entre sí
+            document.getElementById('verifyKeysBtn').addEventListener('click', function() {
+                const publicKey = document.getElementById('verify_public_key').value.trim();
+                const privateKey = document.getElementById('verify_private_key').value.trim();
+                
+                if (!publicKey || !privateKey) {
+                    document.getElementById('verifyResult').innerHTML = `
+                        <div class="alert alert-warning">
+                            <h5>Se requieren ambas claves</h5>
+                            <p>Por favor, ingresa tanto la clave pública como la privada para verificar su correspondencia.</p>
+                        </div>
+                    `;
+                    document.getElementById('verifyResult').style.display = 'block';
+                    return;
+                }
+                
+                // Cambiar el botón a estado de carga
+                document.getElementById('verifyKeysBtn').disabled = true;
+                document.getElementById('verifyKeysBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verificando...';
+                
+                // Realizar la solicitud al servidor
+                fetch('/asymmetric/api/direct/verify_key_pair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        public_key: publicKey,
+                        private_key: privateKey
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Restaurar el botón
+                    document.getElementById('verifyKeysBtn').disabled = false;
+                    document.getElementById('verifyKeysBtn').innerHTML = 'Verificar Correspondencia';
+                    
+                    if (data.success) {
+                        if (data.verified) {
+                            document.getElementById('verifyResult').innerHTML = `
+                                <div class="alert alert-success">
+                                    <h5><i class="bi bi-check-circle"></i> Par de claves verificado</h5>
+                                    <p>${data.message}</p>
+                                    <p class="mb-0">Estas claves son un par válido para cifrado/descifrado.</p>
+                                </div>
+                            `;
+                        } else {
+                            document.getElementById('verifyResult').innerHTML = `
+                                <div class="alert alert-danger">
+                                    <h5><i class="bi bi-x-circle"></i> Las claves no corresponden</h5>
+                                    <p>${data.message}</p>
+                                    <p class="mb-0"><strong>Recomendación:</strong> Genera un nuevo par de claves o asegúrate de usar las claves correspondientes.</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        document.getElementById('verifyResult').innerHTML = `
+                            <div class="alert alert-warning">
+                                <h5><i class="bi bi-exclamation-triangle"></i> Error en la verificación</h5>
+                                <p>${data.error}</p>
+                                <p class="mb-0">Verifica que el formato de las claves sea correcto.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('verifyResult').style.display = 'block';
+                })
+                .catch(error => {
+                    // Restaurar el botón
+                    document.getElementById('verifyKeysBtn').disabled = false;
+                    document.getElementById('verifyKeysBtn').innerHTML = 'Verificar Correspondencia';
+                    
+                    document.getElementById('verifyResult').innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-x-circle"></i> Error de comunicación</h5>
+                            <p>No se pudo realizar la verificación: ${error.message}</p>
+                        </div>
+                    `;
+                    document.getElementById('verifyResult').style.display = 'block';
+                });
+            });
+            
+            // Generar claves
+            document.getElementById('generateKeysBtn').addEventListener('click', function() {
+                const keySize = document.getElementById('key_size').value;
+                
+                // Mostrar indicador de carga
+                document.getElementById('generateKeysBtn').disabled = true;
+                document.getElementById('generateKeysBtn').textContent = 'Generando claves...';
+                
+                fetch('/asymmetric/api/generate_keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        algorithm: 'RSA',
+                        key_size: parseInt(keySize)
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('generateKeysBtn').disabled = false;
+                    document.getElementById('generateKeysBtn').textContent = 'Generar Par de Claves RSA';
+                    
+                    if (data.success) {
+                        // Mostrar resultados
+                        let resultHTML = `
+                            <h4>Par de Claves RSA Generado:</h4>
+                            
+                            <h5>Clave Pública:</h5>
+                            <div class="input-group mb-3">
+                                <textarea class="form-control key-box" id="public_key_result" rows="8" readonly>${data.public_key}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-target="public_key_result" title="Copiar">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            
+                            <h5>Clave Privada:</h5>
+                            <div class="alert alert-warning">
+                                <strong>¡Advertencia!</strong> Mantén esta clave privada segura. No la compartas con nadie.
+                            </div>
+                            <div class="input-group mb-3">
+                                <textarea class="form-control key-box" id="private_key_result" rows="8" readonly>${data.private_key}</textarea>
+                                <button class="btn btn-outline-secondary copy-btn" data-target="private_key_result" title="Copiar">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="mt-3 d-flex gap-2">
+                                <button type="button" class="btn btn-primary" id="useForEncryptBtn">
+                                    Usar clave pública para cifrar
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="useForDecryptBtn">
+                                    Usar clave privada para descifrar
+                                </button>
+                                <button type="button" class="btn btn-info" id="useForVerifyBtn">
+                                    Verificar este par de claves
+                                </button>
+                            </div>
+                        `;
+                        
+                        document.getElementById('resultTitle').textContent = 'Claves RSA Generadas';
+                        document.getElementById('resultContent').innerHTML = resultHTML;
+                        document.getElementById('results').style.display = 'block';
+                        
+                        // Configurar botones de uso de claves
+                        document.getElementById('useForEncryptBtn').addEventListener('click', function() {
+                            document.getElementById('public_key_encrypt').value = data.public_key;
+                            document.getElementById('encrypt-tab').click();
+                        });
+                        
+                        document.getElementById('useForDecryptBtn').addEventListener('click', function() {
+                            document.getElementById('private_key_decrypt').value = data.private_key;
+                            document.getElementById('decrypt-tab').click();
+                        });
+                        
+                        document.getElementById('useForVerifyBtn').addEventListener('click', function() {
+                            document.getElementById('verify_public_key').value = data.public_key;
+                            document.getElementById('verify_private_key').value = data.private_key;
+                            // Mostrar el área de diagnóstico si está oculta
+                            let diagnosticCollapse = new bootstrap.Collapse(document.getElementById('diagnosticTools'), {
+                                show: true
+                            });
+                            // Hacer scroll a las herramientas de diagnóstico
+                            document.getElementById('diagnosticTools').scrollIntoView({behavior: 'smooth'});
+                            // Automáticamente comenzar la verificación
+                            document.getElementById('verifyKeysBtn').click();
+                        });
+                        
+                        // Configurar botones de copia
+                        setupCopyButtons();
+                    } else {
+                        showError('Error generando claves: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('generateKeysBtn').disabled = false;
+                    document.getElementById('generateKeysBtn').textContent = 'Generar Par de Claves RSA';
+                    showError('Error: ' + error);
+                });
+            });
+            
+            // Cifrar mensaje
+            document.getElementById('encryptBtn').addEventListener('click', function() {
+                const plaintext = document.getElementById('plaintext').value;
+                const publicKey = document.getElementById('public_key_encrypt').value;
+                
+                // Validación del texto a cifrar
+                if (!plaintext) {
+                    showError('El texto a cifrar no puede estar vacío.');
+                    return;
+                }
+                
+                // Validación básica de la clave pública
+                if (!publicKey) {
+                    showError('La clave pública no puede estar vacía.');
+                    return;
+                }
+                
+                // Limpieza básica de la clave para mejorar compatibilidad
+                let cleanedPublicKey = publicKey.trim();
+                
+                // Validación del formato de la clave pública
+                if (!cleanedPublicKey.includes("BEGIN") || !cleanedPublicKey.includes("KEY")) {
+                    showError('La clave pública parece tener un formato incorrecto. Debe incluir las etiquetas BEGIN/END y la palabra KEY.');
+                    return;
+                }
+                
+                document.getElementById('encryptBtn').disabled = true;
+                document.getElementById('encryptBtn').textContent = 'Cifrando...';
+                
+                // Mostrar indicador de proceso
+                let loadingHTML = `
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">Procesando...</h4>
+                        <p>Cifrando el mensaje con RSA. Esto puede tardar unos segundos.</p>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                 style="width: 100%"></div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('resultTitle').textContent = 'Cifrando Mensaje';
+                document.getElementById('resultContent').innerHTML = loadingHTML;
+                document.getElementById('results').style.display = 'block';
+                
+                // Usar la API directa que es más robusta
+                fetch('/asymmetric/api/direct/encrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        algorithm: 'RSA',
+                        public_key: cleanedPublicKey,
+                        plaintext: plaintext
+                    }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error en la respuesta del servidor: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('encryptBtn').disabled = false;
+                    document.getElementById('encryptBtn').textContent = 'Cifrar';
+                    
+                    if (data.success) {
+                        let resultHTML = `
+                            <div class="alert alert-success">
+                                <h4 class="alert-heading">¡Cifrado exitoso!</h4>
+                                <p>El mensaje ha sido cifrado correctamente con la clave pública RSA.</p>
+                            </div>
+                            <h4>Texto Cifrado:</h4>
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <textarea class="form-control" id="encrypted_result" rows="3" readonly>${data.ciphertext}</textarea>
+                                    <button class="btn btn-outline-secondary copy-btn" data-target="encrypted_result" title="Copiar">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">
+                                    Este es el texto cifrado en formato Base64. Solo puede ser descifrado con la clave privada correspondiente.
+                                </small>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" id="useForDecryptBtn2">
+                                Usar para descifrar
+                            </button>
+                        `;
+                        
+                        document.getElementById('resultTitle').textContent = 'Mensaje Cifrado con RSA';
+                        document.getElementById('resultContent').innerHTML = resultHTML;
+                        
+                        document.getElementById('useForDecryptBtn2').addEventListener('click', function() {
+                            document.getElementById('ciphertext').value = data.ciphertext;
+                            document.getElementById('decrypt-tab').click();
+                        });
+                        
+                        setupCopyButtons();
+                    } else {
+                        // Usar error con detalles si están disponibles
+                        if (data.details) {
+                            showError(data.error, data.details);
+                        } else {
+                            showError(data.error);
+                        }
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('encryptBtn').disabled = false;
+                    document.getElementById('encryptBtn').textContent = 'Cifrar';
+                    showError('Error de comunicación: ' + error.message);
+                });
+            });
+            
+            // Descifrar mensaje
+            document.getElementById('decryptBtn').addEventListener('click', function() {
+                const ciphertext = document.getElementById('ciphertext').value;
+                const privateKey = document.getElementById('private_key_decrypt').value;
+                
+                // Validación del texto cifrado
+                if (!ciphertext) {
+                    showError('El texto cifrado no puede estar vacío.');
+                    return;
+                }
+                
+                // Validación básica de la clave privada
+                if (!privateKey) {
+                    showError('La clave privada no puede estar vacía.');
+                    return;
+                }
+                
+                // Limpieza básica de la clave para mejorar compatibilidad
+                let cleanedPrivateKey = privateKey.trim();
+                
+                // Validación del formato de la clave privada
+                if (!cleanedPrivateKey.includes("BEGIN") || !cleanedPrivateKey.includes("KEY")) {
+                    showError('La clave privada parece tener un formato incorrecto. Debe incluir las etiquetas BEGIN/END y la palabra KEY.');
+                    return;
+                }
+                
+                document.getElementById('decryptBtn').disabled = true;
+                document.getElementById('decryptBtn').textContent = 'Descifrando...';
+                
+                // Mostrar indicador de proceso
+                let loadingHTML = `
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">Procesando...</h4>
+                        <p>Descifrando el mensaje con RSA. Esto puede tardar unos segundos.</p>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                 style="width: 100%"></div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('resultTitle').textContent = 'Descifrando Mensaje';
+                document.getElementById('resultContent').innerHTML = loadingHTML;
+                document.getElementById('results').style.display = 'block';
+                
+                // Usar la API directa que es más robusta
+                fetch('/asymmetric/api/direct/decrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        algorithm: 'RSA',
+                        private_key: cleanedPrivateKey,
+                        ciphertext: ciphertext
+                    }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error en la respuesta del servidor: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('decryptBtn').disabled = false;
+                    document.getElementById('decryptBtn').textContent = 'Descifrar';
+                    
+                    if (data.success) {
+                        let resultHTML = `
+                            <div class="alert alert-success">
+                                <h4 class="alert-heading">¡Descifrado exitoso!</h4>
+                                <p>El mensaje ha sido descifrado correctamente con la clave privada RSA.</p>
+                            </div>
+                            <h4>Texto Descifrado:</h4>
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <textarea class="form-control" id="decrypted_result" rows="3" readonly>${data.plaintext}</textarea>
+                                    <button class="btn btn-outline-secondary copy-btn" data-target="decrypted_result" title="Copiar">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.getElementById('resultTitle').textContent = 'Mensaje Descifrado con RSA';
+                        document.getElementById('resultContent').innerHTML = resultHTML;
+                        
+                        setupCopyButtons();
+                    } else {
+                        // Usar error con detalles si están disponibles
+                        if (data.details) {
+                            showError(data.error, data.details);
+                        } else {
+                            showError(data.error);
+                        }
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('decryptBtn').disabled = false;
+                    document.getElementById('decryptBtn').textContent = 'Descifrar';
+                    showError('Error de comunicación: ' + error.message);
+                });
+            });
+            
+            // Función para mostrar mensajes de error con información detallada
+            function showError(errorMessage, errorDetails) {
+                console.error('Error:', errorMessage);
+                if (errorDetails) {
+                    console.error('Detalles:', errorDetails);
+                }
+                
+                // Crear un mensaje detallado para el usuario
+                let detailedError = errorMessage;
+                
+                // Añadir consejos útiles según el tipo de error
+                if (errorMessage.includes('clave privada') || errorMessage.includes('private key')) {
+                    detailedError += '<hr><strong>Consejos para solucionar problemas con claves privadas:</strong>' +
+                    '<ul>' +
+                    '<li>Asegúrate de usar una clave privada RSA válida en formato PEM.</li>' +
+                    '<li>La clave debe contener las etiquetas BEGIN/END PRIVATE KEY o BEGIN/END RSA PRIVATE KEY.</li>' +
+                    '<li>Si exportaste la clave desde OpenSSL, verifica que no falta ninguna línea.</li>' +
+                    '<li>Si la clave está protegida con contraseña, debes quitarla primero.</li>' +
+                    '</ul>';
+                } else if (errorMessage.includes('clave pública') || errorMessage.includes('public key')) {
+                    detailedError += '<hr><strong>Consejos para solucionar problemas con claves públicas:</strong>' +
+                    '<ul>' +
+                    '<li>Asegúrate de usar una clave pública RSA válida en formato PEM.</li>' +
+                    '<li>La clave debe contener las etiquetas BEGIN/END PUBLIC KEY o BEGIN/END RSA PUBLIC KEY.</li>' +
+                    '<li>Si exportaste la clave desde OpenSSL o un certificado, verifica el formato.</li>' +
+                    '</ul>';
+                } else if (errorMessage.includes('cifrado') || errorMessage.includes('encrypt')) {
+                    detailedError += '<hr><strong>Consejos para solucionar problemas de cifrado:</strong>' +
+                    '<ul>' +
+                    '<li>Verifica que la clave pública es válida y corresponde al algoritmo RSA.</li>' +
+                    '<li>El texto debe tener un tamaño adecuado para RSA (generalmente menos de 245 bytes).</li>' +
+                    '</ul>';
+                } else if (errorMessage.includes('descifrado') || errorMessage.includes('decrypt')) {
+                    detailedError += '<hr><strong>Consejos para solucionar problemas de descifrado:</strong>' +
+                    '<ul>' +
+                    '<li>Asegúrate de estar usando la clave privada correspondiente a la clave pública.</li>' +
+                    '<li>Verifica que el texto cifrado está en formato Base64 válido.</li>' +
+                    '<li>El texto cifrado debe haber sido generado con la clave pública correspondiente.</li>' +
+                    '</ul>';
+                }
+                
+                // Añadir detalles técnicos si están disponibles
+                let detailsSection = '';
+                if (errorDetails) {
+                    detailsSection = `
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#errorDetails" aria-expanded="false" aria-controls="errorDetails">
+                                Mostrar detalles técnicos
+                            </button>
+                            <div class="collapse mt-2" id="errorDetails">
+                                <div class="card card-body bg-light">
+                                    <pre class="mb-0" style="font-size: 0.8rem;">${errorDetails}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Mostrar el error
+                document.getElementById('resultTitle').textContent = 'Error';
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">Se ha producido un error</h4>
+                        <p>${detailedError}</p>
+                    </div>
+                    ${detailsSection}
+                    <div class="mt-3">
+                        ${errorMessage.includes('descifrado') || errorMessage.includes('decrypt') || errorMessage.includes('clave privada') ? 
+                        `<button class="btn btn-warning" onclick="showDiagnosticTools(); return false;">
+                            <i class="bi bi-tools"></i> Herramientas de Diagnóstico
+                        </button> ` : ''}
+                        <a href="#" class="btn btn-secondary" onclick="document.getElementById('results').style.display='none'; return false;">
+                            <i class="bi bi-x-circle"></i> Cerrar
+                        </a>
+                    </div>
+                `;
+                document.getElementById('results').style.display = 'block';
+                
+                // Hacer scroll al mensaje de error
+                document.getElementById('results').scrollIntoView({behavior: 'smooth'});
+            }
+            
+            // Función para mostrar herramientas de diagnóstico
+            function showDiagnosticTools() {
+                // Mostrar el área de diagnóstico
+                let diagnosticCollapse = new bootstrap.Collapse(document.getElementById('diagnosticTools'), {
+                    show: true
+                });
+                
+                // Si hay claves en los formularios, transferirlas a la herramienta de verificación
+                const publicKey = document.getElementById('public_key_encrypt').value.trim();
+                const privateKey = document.getElementById('private_key_decrypt').value.trim();
+                
+                if (publicKey) {
+                    document.getElementById('verify_public_key').value = publicKey;
+                }
+                
+                if (privateKey) {
+                    document.getElementById('verify_private_key').value = privateKey;
+                }
+                
+                // Hacer scroll a las herramientas de diagnóstico
+                document.getElementById('diagnosticTools').scrollIntoView({behavior: 'smooth'});
+                
+                // Si ambas claves están presentes, verificar automáticamente
+                if (publicKey && privateKey) {
+                    document.getElementById('verifyKeysBtn').click();
+                }
+            }
+            
+            function setupCopyButtons() {
+                document.querySelectorAll('.copy-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const targetId = this.getAttribute('data-target');
+                        const textarea = document.getElementById(targetId);
+                        
+                        textarea.select();
+                        document.execCommand('copy');
+                        
+                        // Cambiar texto del botón temporalmente
+                        const originalHTML = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check"></i>';
+                        
+                        setTimeout(() => {
+                            this.innerHTML = originalHTML;
+                        }, 1500);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

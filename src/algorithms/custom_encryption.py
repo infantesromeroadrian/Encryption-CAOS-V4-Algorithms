@@ -530,5 +530,64 @@ def demo():
     print("=" * 80)
 
 
+# Funciones independientes para uso en otros módulos
+def caos_v3_encrypt(text: Union[str, bytes], password: str, rounds: int = DEFAULT_ROUNDS) -> str:
+    """
+    Encripta texto usando CAOS v3.0.
+    
+    Args:
+        text: Texto a encriptar (str o bytes)
+        password: Contraseña para encriptación
+        rounds: Número de rondas de encriptación
+        
+    Returns:
+        Texto encriptado en formato Base64
+    """
+    import base64
+    
+    # Convertir texto a bytes si es necesario
+    if isinstance(text, str):
+        text_bytes = text.encode('utf-8')
+    else:
+        text_bytes = text
+    
+    # Crear instancia de encriptación
+    cipher = CaosEncryption(password, rounds)
+    
+    # Encriptar y codificar en base64
+    encrypted = cipher.encrypt(text_bytes)
+    return base64.b64encode(encrypted).decode('utf-8')
+
+def caos_v3_decrypt(encrypted_text: str, password: str, rounds: int = DEFAULT_ROUNDS) -> str:
+    """
+    Desencripta texto previamente encriptado con caos_v3_encrypt.
+    
+    Args:
+        encrypted_text: Texto encriptado en formato Base64
+        password: Contraseña para desencriptación
+        rounds: Número de rondas de encriptación
+        
+    Returns:
+        Texto desencriptado
+    """
+    import base64
+    
+    # Decodificar de base64
+    encrypted_bytes = base64.b64decode(encrypted_text)
+    
+    # Crear instancia de encriptación
+    cipher = CaosEncryption(password, rounds)
+    
+    # Desencriptar
+    decrypted = cipher.decrypt(encrypted_bytes)
+    
+    # Convertir a string
+    try:
+        return decrypted.decode('utf-8')
+    except UnicodeDecodeError:
+        # Si no se puede decodificar como UTF-8, devolver los bytes en base64
+        return base64.b64encode(decrypted).decode('utf-8')
+
+
 if __name__ == "__main__":
     demo() 

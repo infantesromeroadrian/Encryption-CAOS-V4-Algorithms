@@ -8,13 +8,210 @@ Este script demuestra el uso de algoritmos de encriptación simétrica como AES.
 
 import os
 import base64
+import hashlib
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 from Crypto.Cipher import AES as CryptoAES
+from Crypto.Cipher import DES3
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
+# Funciones utilizadas por el servicio de benchmark
+
+def derive_key_and_iv(password, salt=None, key_length=32, iv_length=16):
+    """
+    Deriva una clave y un IV a partir de una contraseña.
+    
+    Args:
+        password: Contraseña de la que derivar la clave
+        salt: Sal para la derivación (opcional)
+        key_length: Longitud de la clave en bytes
+        iv_length: Longitud del IV en bytes
+        
+    Returns:
+        Tuple (clave, iv, salt)
+    """
+    if salt is None:
+        salt = get_random_bytes(16)
+    
+    d = d_i = b''
+    
+    # Usar PBKDF2 sería mejor, pero esto es más simple para el ejemplo
+    while len(d) < key_length + iv_length:
+        d_i = hashlib.md5(d_i + password.encode('utf-8') + salt).digest()
+        d += d_i
+    
+    key = d[:key_length]
+    iv = d[key_length:key_length + iv_length]
+    
+    return key, iv, salt
+
+def aes_encrypt_cbc(text, password):
+    """
+    Cifra un texto usando AES en modo CBC.
+    
+    Args:
+        text: Texto a cifrar
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto cifrado en base64
+    """
+    # Derivar clave e IV
+    key, iv, salt = derive_key_and_iv(password)
+    
+    # Crear cifrador AES en modo CBC
+    cipher = CryptoAES.new(key, CryptoAES.MODE_CBC, iv)
+    
+    # Cifrar el texto
+    text_bytes = text.encode('utf-8')
+    padded_data = pad(text_bytes, CryptoAES.block_size)
+    ciphertext = cipher.encrypt(padded_data)
+    
+    # Combinar salt + iv + ciphertext y convertir a base64
+    result = salt + iv + ciphertext
+    return base64.b64encode(result).decode('utf-8')
+
+def aes_decrypt_cbc(ciphertext_b64, password):
+    """
+    Descifra un texto cifrado con AES en modo CBC.
+    
+    Args:
+        ciphertext_b64: Texto cifrado en base64
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto descifrado
+    """
+    # Decodificar de base64
+    ciphertext = base64.b64decode(ciphertext_b64)
+    
+    # Extraer salt, iv y texto cifrado
+    salt = ciphertext[:16]
+    iv = ciphertext[16:32]
+    actual_ciphertext = ciphertext[32:]
+    
+    # Derivar clave
+    key, _, _ = derive_key_and_iv(password, salt)
+    
+    # Descifrar
+    cipher = CryptoAES.new(key, CryptoAES.MODE_CBC, iv)
+    padded_text = cipher.decrypt(actual_ciphertext)
+    text = unpad(padded_text, CryptoAES.block_size)
+    
+    return text.decode('utf-8')
+
+def aes_encrypt_gcm(text, password):
+    """
+    Cifra un texto usando AES en modo GCM.
+    
+    Args:
+        text: Texto a cifrar
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto cifrado en base64
+    """
+    # Derivar clave y nonce
+    key, nonce, salt = derive_key_and_iv(password, key_length=32, iv_length=12)
+    
+    # Crear cifrador AES en modo GCM
+    cipher = CryptoAES.new(key, CryptoAES.MODE_GCM, nonce=nonce)
+    
+    # Cifrar el texto
+    text_bytes = text.encode('utf-8')
+    ciphertext, tag = cipher.encrypt_and_digest(text_bytes)
+    
+    # Combinar salt + nonce + tag + ciphertext y convertir a base64
+    result = salt + nonce + tag + ciphertext
+    return base64.b64encode(result).decode('utf-8')
+
+def aes_decrypt_gcm(ciphertext_b64, password):
+    """
+    Descifra un texto cifrado con AES en modo GCM.
+    
+    Args:
+        ciphertext_b64: Texto cifrado en base64
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto descifrado
+    """
+    # Decodificar de base64
+    ciphertext = base64.b64decode(ciphertext_b64)
+    
+    # Extraer salt, nonce, tag y texto cifrado
+    salt = ciphertext[:16]
+    nonce = ciphertext[16:28]
+    tag = ciphertext[28:44]
+    actual_ciphertext = ciphertext[44:]
+    
+    # Derivar clave
+    key, _, _ = derive_key_and_iv(password, salt, key_length=32, iv_length=12)
+    
+    # Descifrar
+    cipher = CryptoAES.new(key, CryptoAES.MODE_GCM, nonce=nonce)
+    text = cipher.decrypt_and_verify(actual_ciphertext, tag)
+    
+    return text.decode('utf-8')
+
+def triple_des_encrypt(text, password):
+    """
+    Cifra un texto usando 3DES.
+    
+    Args:
+        text: Texto a cifrar
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto cifrado en base64
+    """
+    # Derivar clave e IV (3DES necesita 24 bytes para clave y 8 bytes para IV)
+    key, iv, salt = derive_key_and_iv(password, key_length=24, iv_length=8)
+    
+    # Crear cifrador 3DES en modo CBC
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    
+    # Cifrar el texto
+    text_bytes = text.encode('utf-8')
+    padded_data = pad(text_bytes, DES3.block_size)
+    ciphertext = cipher.encrypt(padded_data)
+    
+    # Combinar salt + iv + ciphertext y convertir a base64
+    result = salt + iv + ciphertext
+    return base64.b64encode(result).decode('utf-8')
+
+def triple_des_decrypt(ciphertext_b64, password):
+    """
+    Descifra un texto cifrado con 3DES.
+    
+    Args:
+        ciphertext_b64: Texto cifrado en base64
+        password: Contraseña para derivar la clave
+        
+    Returns:
+        Texto descifrado
+    """
+    # Decodificar de base64
+    ciphertext = base64.b64decode(ciphertext_b64)
+    
+    # Extraer salt, iv y texto cifrado
+    salt = ciphertext[:16]
+    iv = ciphertext[16:24]
+    actual_ciphertext = ciphertext[24:]
+    
+    # Derivar clave
+    key, _, _ = derive_key_and_iv(password, salt, key_length=24, iv_length=8)
+    
+    # Descifrar
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    padded_text = cipher.decrypt(actual_ciphertext)
+    text = unpad(padded_text, DES3.block_size)
+    
+    return text.decode('utf-8')
+
+# Ejemplos originales
 def aes_example_with_cryptography():
     """Ejemplo de encriptación AES usando la biblioteca cryptography."""
     print("=" * 50)

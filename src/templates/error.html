@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - CriptoLab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Error</h1>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Ha ocurrido un error</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Lo sentimos, se ha producido un error al procesar su solicitud.</p>
+                        
+                        <div class="alert alert-danger">
+                            <p><strong>Detalles del error:</strong> {{ error }}</p>
+                        </div>
+                        
+                        <p>Por favor, intente lo siguiente:</p>
+                        <ul>
+                            <li>Verifique que los datos ingresados sean correctos.</li>
+                            <li>Asegúrese de que está utilizando el formato correcto para los datos.</li>
+                            <li>Si está descifrando, asegúrese de usar la misma contraseña o clave con la que se cifró el mensaje.</li>
+                            <li>Intente nuevamente más tarde.</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <a href="{{ request.referrer or '/' }}" class="btn btn-primary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                            <a href="/" class="btn btn-outline-secondary">
+                                <i class="fas fa-home"></i> Ir al inicio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html> 

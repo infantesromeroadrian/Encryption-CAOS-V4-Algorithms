@@ -439,14 +439,14 @@ def run_benchmark_for_ui(data_size: int = 1000, password: str = 'benchmark') -> 
     
     # Benchmark CAOS v4
     try:
-        caos_v4 = CaosV4Encryption(password=password, iterations=1000)
+        from algorithms.caos_v4 import encrypt as caos_v4_encrypt, decrypt as caos_v4_decrypt
         
         start_time = time.time()
-        caosv4_ciphertext = caos_v4.encrypt(data)
+        caosv4_ciphertext = caos_v4_encrypt(data, password, iterations=1000)
         caosv4_encrypt_time = time.time() - start_time
         
         start_time = time.time()
-        caosv4_plaintext = caos_v4.decrypt(caosv4_ciphertext)
+        caosv4_plaintext = caos_v4_decrypt(caosv4_ciphertext, password, iterations=1000)
         caosv4_decrypt_time = time.time() - start_time
         
         results['data'].append({

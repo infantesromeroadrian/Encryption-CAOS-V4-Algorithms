@@ -34,7 +34,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">Criptolab</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -164,7 +164,8 @@
                         
                         <h5>Clave Pública:</h5>
                         <div class="input-group mb-3">
-                            <div class="key-box">{{ result.public_key }}</div>
+                            <textarea class="form-control key-textarea" id="public_key_result" rows="8" readonly
+                                   aria-label="Clave pública generada" title="Clave pública RSA generada">{{ result.public_key }}</textarea>
                             <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.public_key }}" title="Copiar">📋</button>
                         </div>
                         
@@ -173,8 +174,18 @@
                             <strong>¡Advertencia!</strong> Mantén esta clave privada segura. No la compartas con nadie.
                         </div>
                         <div class="input-group mb-3">
-                            <div class="key-box">{{ result.private_key }}</div>
+                            <textarea class="form-control key-textarea" id="private_key_result" rows="8" readonly
+                                   aria-label="Clave privada generada" title="Clave privada RSA generada">{{ result.private_key }}</textarea>
                             <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.private_key }}" title="Copiar">📋</button>
+                        </div>
+                        
+                        <div class="mt-3 d-flex gap-2">
+                            <button type="button" class="btn btn-primary" id="usarParaEncriptarBtn">
+                                Usar clave pública para encriptar
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="usarParaDesencriptarBtn">
+                                Usar clave privada para desencriptar
+                            </button>
                         </div>
                     {% endif %}
 
@@ -182,7 +193,7 @@
                         <h4>Texto Encriptado:</h4>
                         <div class="mb-3">
                             <div class="input-group">
-                                <textarea class="form-control" rows="3" readonly>{{ result.encrypted }}</textarea>
+                                <textarea class="form-control" rows="3" readonly aria-label="Texto encriptado">{{ result.encrypted }}</textarea>
                                 <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.encrypted }}" title="Copiar">📋</button>
                             </div>
                             <small class="text-muted">
@@ -198,7 +209,7 @@
                         <h4>Texto Desencriptado:</h4>
                         <div class="mb-3">
                             <div class="input-group">
-                                <textarea class="form-control" rows="3" readonly>{{ result.decrypted }}</textarea>
+                                <textarea class="form-control" rows="3" readonly aria-label="Texto desencriptado">{{ result.decrypted }}</textarea>
                                 <button class="btn btn-outline-secondary copy-btn" data-copy="{{ result.decrypted }}" title="Copiar">📋</button>
                             </div>
                         </div>
@@ -284,6 +295,41 @@
                 });
             });
         });
+        
+        // Funciones para usar las claves generadas
+        const usarParaEncriptarBtn = document.getElementById('usarParaEncriptarBtn');
+        if (usarParaEncriptarBtn) {
+            usarParaEncriptarBtn.addEventListener('click', function() {
+                // Cambiar a la pestaña de encriptar
+                document.getElementById('encrypt-tab').click();
+                
+                // Obtener la clave pública del resultado
+                const publicKey = document.getElementById('public_key_result').value;
+                
+                // Rellenar el campo de clave pública en el formulario de encriptación
+                document.getElementById('public_key').value = publicKey;
+                
+                // Enfocar el campo de texto a encriptar
+                document.getElementById('text').focus();
+            });
+        }
+        
+        const usarParaDesencriptarBtn = document.getElementById('usarParaDesencriptarBtn');
+        if (usarParaDesencriptarBtn) {
+            usarParaDesencriptarBtn.addEventListener('click', function() {
+                // Cambiar a la pestaña de desencriptar
+                document.getElementById('decrypt-tab').click();
+                
+                // Obtener la clave privada del resultado
+                const privateKey = document.getElementById('private_key_result').value;
+                
+                // Rellenar el campo de clave privada en el formulario de desencriptación
+                document.getElementById('private_key').value = privateKey;
+                
+                // Enfocar el campo de texto encriptado
+                document.getElementById('encrypted').focus();
+            });
+        }
     </script>
 </body>
 </html> 
