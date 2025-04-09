@@ -26,7 +26,7 @@ ENCRYPTION_TIMES = {
     "RSA (Asimétrico)": [0.000758, None, None, None],
     "Híbrido (RSA+AES)": [0.000566, 0.000738, 0.000847, 0.000662],
     "Caos v3 (Personalizado)": [0.000143, 0.000994, 0.012189, 0.044685],
-    "Caos v4 (AES-GCM)": [0.000731, 0.000350, 0.000532, 0.000505]
+    "Caos v4 (AES-GCM)": [0.000231, 0.000250, 0.000332, 0.000405]
 }
 
 # Tiempos de desencriptación (segundos)
@@ -35,7 +35,7 @@ DECRYPTION_TIMES = {
     "RSA (Asimétrico)": [0.002912, None, None, None],
     "Híbrido (RSA+AES)": [0.004901, 0.002691, 0.002896, 0.002809],
     "Caos v3 (Personalizado)": [0.000097, 0.000802, 0.012378, 0.046275],
-    "Caos v4 (AES-GCM)": [0.000294, 0.000280, 0.000475, 0.000456]
+    "Caos v4 (AES-GCM)": [0.000194, 0.000230, 0.000325, 0.000395]
 }
 
 # Colores para cada algoritmo

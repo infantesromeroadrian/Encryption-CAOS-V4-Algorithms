@@ -132,72 +132,87 @@ def process_symmetric_request(
         if mode not in ['CBC', 'GCM']:
             raise ValueError(f"Modo no soportado: {mode}")
         
+        # Importar CAOS V4
+        from algorithms.caos_v4 import CaosEncryption
+        
+        # Crear instancia de CAOS V4 con iteraciones fijas
+        iterations = 100_000  # Usar el mismo número de iteraciones que en custom_service
+        cipher = CaosEncryption(password=password, iterations=iterations)
+        
         # Procesar según la acción
         if action == 'encrypt':
             if not text:
                 raise ValueError("No hay texto para cifrar")
                 
-            logger.info(f"Cifrando mensaje con {algorithm}-{mode}")
+            logger.info(f"Cifrando mensaje con CAOS V4")
             
-            if mode == 'GCM':
-                # Usar la función GCM especial para autenticación
-                key = get_random_bytes(32)  # Generar clave aleatoria
-                nonce = get_random_bytes(12)
-                cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-                ciphertext, tag = cipher.encrypt_and_digest(text.encode('utf-8'))
+            try:
+                # Asegurar que el texto esté en bytes
+                if isinstance(text, str):
+                    text_bytes = text.encode('utf-8')
+                else:
+                    text_bytes = text
+                    
+                # Encriptar con CAOS V4
+                encrypted_data = cipher.encrypt(text_bytes)
                 
-                # Combinar todo en un solo string base64
-                combined = key + nonce + tag + ciphertext
-                encrypted = base64.b64encode(combined).decode('utf-8')
+                # Extraer el IV (nonce) del mensaje encriptado
+                # En CAOS V4, el IV está en los bytes 16:28 del mensaje encriptado
+                iv = encrypted_data[16:28]
+                
+                # Convertir a Base64 para la web
+                encrypted = base64.b64encode(encrypted_data).decode('utf-8')
+                iv_str = base64.b64encode(iv).decode('utf-8')
+                
                 return {
                     'success': True,
                     'encrypted': encrypted,
-                    'original': text
-                }
-            else:  # CBC
-                encrypted, iv = aes_encrypt_decrypt(text, password, encrypt=True, mode=mode)
-                return {
-                    'success': True,
-                    'encrypted': encrypted,
-                    'iv': iv,
                     'original': text,
-                    'mode': mode
+                    'iv': iv_str,
+                    'parameters': {
+                        'iterations': iterations
+                    }
                 }
+            except Exception as e:
+                logger.error(f"Error durante la encriptación: {str(e)}")
+                raise ValueError(f"Error al encriptar: {str(e)}") from e
         else:  # decrypt
-            logger.info("Descifrando mensaje...")
+            logger.info("Descifrando mensaje con CAOS V4...")
             
             # Verificar que exista el texto cifrado
             if not encrypted:
                 raise ValueError("No hay texto cifrado para descifrar")
                 
-            if mode == 'GCM':
-                # Desencriptar GCM
-                try:
-                    combined = base64.b64decode(encrypted)
-                    key = combined[:32]
-                    nonce = combined[32:44]
-                    tag = combined[44:60]
-                    ciphertext = combined[60:]
-                    
-                    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-                    plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-                    return {
-                        'success': True,
-                        'decrypted': plaintext.decode('utf-8'),
-                        'encrypted': encrypted
-                    }
-                except Exception as e:
-                    raise ValueError(f"Error al desencriptar GCM: {str(e)}")
-            else:  # CBC
-                if not iv:
-                    raise ValueError("Falta el Vector de Inicialización (IV). Este valor es necesario para descifrar.")
+            try:
+                # Decodificar de Base64
+                encrypted_data = base64.b64decode(encrypted)
                 
-                decrypted = aes_encrypt_decrypt(encrypted, password, encrypt=False, iv=iv, mode=mode)
+                # Verificar que el mensaje tenga la longitud mínima requerida
+                if len(encrypted_data) < 28:  # 16 bytes salt + 12 bytes nonce
+                    raise ValueError("Mensaje cifrado demasiado corto")
+                
+                # Desencriptar con CAOS V4
+                decrypted_data = cipher.decrypt(encrypted_data)
+                
+                # Intentar decodificar como UTF-8, si falla devolver los bytes
+                try:
+                    decrypted_text = decrypted_data.decode('utf-8')
+                except UnicodeDecodeError:
+                    logger.warning("No se pudo decodificar como UTF-8, devolviendo bytes")
+                    decrypted_text = decrypted_data
+                
                 return {
                     'success': True,
-                    'decrypted': decrypted,
-                    'encrypted': encrypted
+                    'decrypted': decrypted_text,
+                    'encrypted': encrypted,
+                    'parameters': {
+                        'iterations': iterations
+                    }
                 }
+            except Exception as e:
+                logger.error(f"Error durante la desencriptación: {str(e)}")
+                raise ValueError(f"Error al desencriptar: {str(e)}") from e
+                
     except ValueError as ve:
         logger.error(f"Error de validación: {str(ve)}")
         return {

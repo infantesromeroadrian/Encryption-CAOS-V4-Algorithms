@@ -187,10 +187,9 @@ def benchmark_custom_encryption(data: bytes) -> Tuple[float, float, str]:
 
 def benchmark_caos_v4_encryption(data: bytes) -> Tuple[float, float, str]:
     """Benchmarking de nuestra encriptación CAOS v4 con AES-GCM."""
-    # Crear instancia con iteraciones reducidas para benchmark
     try:
-        # Usamos menos iteraciones para el benchmark (1000 en lugar de 100000)
-        encriptador = CaosV4Encryption(password="clave_benchmark", iterations=1000)
+        # Usar iteraciones por defecto para mantener compatibilidad
+        encriptador = CaosV4Encryption(password="clave_benchmark")
         
         # Medir tiempo de encriptación
         start_time = time.time()
@@ -202,7 +201,10 @@ def benchmark_caos_v4_encryption(data: bytes) -> Tuple[float, float, str]:
         decrypted_data = encriptador.decrypt(encrypted_data)
         decrypt_time = time.time() - start_time
         
-        return encrypt_time, decrypt_time, encrypted_data
+        # Convertir a Base64 para consistencia con otros algoritmos
+        encrypted_b64 = base64.b64encode(encrypted_data).decode('utf-8')
+        
+        return encrypt_time, decrypt_time, encrypted_b64
     except Exception as e:
         print(f"Error en el algoritmo CAOS v4: {e}")
         return 0.0, 0.0, ""

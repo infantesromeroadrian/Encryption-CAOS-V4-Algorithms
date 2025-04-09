@@ -17,7 +17,7 @@ if src_dir not in sys.path:
 
 # Importar funciones del módulo de cifrado personalizado
 from algorithms.custom_encryption import caos_v3_encrypt, caos_v3_decrypt
-from algorithms.caos_v4 import encrypt as caos_v4_encrypt, decrypt as caos_v4_decrypt
+from algorithms.caos_v4 import CaosEncryption
 
 logger = logging.getLogger(__name__)
 
@@ -68,29 +68,35 @@ def process_custom_request(
             logger.info(f"Cifrando mensaje con {algorithm}")
             
             if algorithm == 'CAOS_V4':
-                iterations = parameters.get('iterations', 3)
-                seed = parameters.get('seed', 42)
+                # Crear instancia de CAOS V4 con iteraciones por defecto
+                iterations = parameters.get('iterations', 100_000)  # Usar iteraciones fijas por defecto
+                cipher = CaosEncryption(password=password, iterations=iterations)
                 
-                encrypted_data = caos_v4_encrypt(
-                    text, 
-                    password,
-                    iterations=iterations,
-                    seed=seed
-                )
-                
-                # Convertir a Base64 para transferencia web
-                encrypted_b64 = base64.b64encode(encrypted_data).decode('utf-8')
-                
-                return {
-                    'success': True,
-                    'encrypted': encrypted_b64,
-                    'original': text,
-                    'algorithm': algorithm,
-                    'parameters': {
-                        'iterations': iterations,
-                        'seed': seed
+                # Encriptar
+                try:
+                    # Asegurar que el texto esté en bytes
+                    if isinstance(text, str):
+                        text_bytes = text.encode('utf-8')
+                    else:
+                        text_bytes = text
+                        
+                    encrypted_data = cipher.encrypt(text_bytes)
+                    
+                    # Convertir a Base64 para transferencia web
+                    encrypted_b64 = base64.b64encode(encrypted_data).decode('utf-8')
+                    
+                    return {
+                        'success': True,
+                        'encrypted': encrypted_b64,
+                        'original': text,
+                        'algorithm': algorithm,
+                        'parameters': {
+                            'iterations': iterations
+                        }
                     }
-                }
+                except Exception as e:
+                    logger.error(f"Error durante la encriptación: {str(e)}")
+                    raise ValueError(f"Error al encriptar: {str(e)}") from e
             else:  # CAOS_V3
                 rounds = parameters.get('rounds', 10)
                 
@@ -100,7 +106,6 @@ def process_custom_request(
                     rounds=rounds
                 )
                 
-                # Para CAOS_V3, la salida ya es una cadena, no necesita codificación adicional
                 return {
                     'success': True,
                     'encrypted': encrypted_data,
@@ -122,18 +127,55 @@ def process_custom_request(
                 
             try:
                 if algorithm == 'CAOS_V4':
-                    iterations = parameters.get('iterations', 3)
-                    seed = parameters.get('seed', 42)
+                    # Crear instancia de CAOS V4 con las mismas iteraciones usadas para encriptar
+                    iterations = parameters.get('iterations', 100_000)
+                    cipher = CaosEncryption(password=password, iterations=iterations)
                     
-                    # Decodificar de Base64
-                    encrypted_bytes = base64.b64decode(encrypted)
+                    # Decodificar Base64
+                    try:
+                        logger.info(f"Longitud del mensaje encriptado (Base64): {len(encrypted)}")
+                        encrypted_bytes = base64.b64decode(encrypted)
+                        logger.info(f"Longitud del mensaje decodificado: {len(encrypted_bytes)}")
+                    except Exception as e:
+                        logger.error(f"Error al decodificar Base64: {str(e)}")
+                        raise ValueError(
+                            "Error al decodificar Base64. "
+                            "Asegúrate de que el mensaje encriptado esté en formato Base64 válido."
+                        ) from e
                     
-                    decrypted = caos_v4_decrypt(
-                        encrypted_bytes, 
-                        password,
-                        iterations=iterations,
-                        seed=seed
-                    )
+                    # Desencriptar
+                    try:
+                        logger.info("Iniciando desencriptación...")
+                        decrypted = cipher.decrypt(encrypted_bytes)
+                        logger.info(f"Desencriptación exitosa. Longitud del mensaje desencriptado: {len(decrypted)}")
+                        
+                        # Intentar decodificar como UTF-8, si falla devolver los bytes
+                        try:
+                            decrypted_text = decrypted.decode('utf-8')
+                            logger.info("Mensaje decodificado a UTF-8 correctamente")
+                        except UnicodeDecodeError:
+                            logger.warning("No se pudo decodificar como UTF-8, devolviendo bytes")
+                            decrypted_text = decrypted
+                            
+                    except Exception as e:
+                        logger.error(f"Error durante la desencriptación: {str(e)}")
+                        raise ValueError(
+                            f"Error al desencriptar: {str(e)}. "
+                            "Por favor, verifica que: "
+                            "1) La contraseña es correcta "
+                            "2) El mensaje fue encriptado con CAOS V4 "
+                            "3) El mensaje no ha sido modificado"
+                        ) from e
+                    
+                    return {
+                        'success': True,
+                        'decrypted': decrypted_text,
+                        'encrypted': encrypted,
+                        'algorithm': algorithm,
+                        'parameters': {
+                            'iterations': iterations
+                        }
+                    }
                 else:  # CAOS_V3
                     rounds = parameters.get('rounds', 10)
                     
@@ -142,13 +184,13 @@ def process_custom_request(
                         password,
                         rounds=rounds
                     )
-                
-                return {
-                    'success': True,
-                    'decrypted': decrypted,
-                    'encrypted': encrypted,
-                    'algorithm': algorithm
-                }
+                    
+                    return {
+                        'success': True,
+                        'decrypted': decrypted,
+                        'encrypted': encrypted,
+                        'algorithm': algorithm
+                    }
             except Exception as e:
                 raise ValueError(f"Error al desencriptar: {str(e)}")
     
