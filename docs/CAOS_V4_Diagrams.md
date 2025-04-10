@@ -1,173 +1,166 @@
-# Diagramas de Arquitectura CAOS V4
+# Diagramas de CAOS V4 - Versión Técnica y Amigable
 
-A continuación se presentan los diagramas que ilustran la arquitectura del algoritmo CAOS V4.
-
-## Arquitectura de Tres Capas
+## Arquitectura de Tres Capas (Técnico) / ¿Cómo Protege CAOS V4 tus Secretos? (Amigable)
 
 ```mermaid
 flowchart TD
-    subgraph "Capa 1: Derivación"
-        A[Contraseña] --> B[Sal]
-        B --> C[PBKDF2]
-        C --> D[Clave AES]
+    subgraph "Capa 1: Derivación PBKDF2"
+        A[Contraseña] --> B[Sal - Sello Especial]
+        B --> C[PBKDF2 - Proceso de Mezcla]
+        C --> D[Clave AES - Llave Maestra]
     end
     
-    subgraph "Capa 2: Cifrado"
-        E[Datos] --> F[AES-GCM]
+    subgraph "Capa 2: Cifrado AES-GCM"
+        E[Datos] --> F[AES-GCM - Caja Fuerte Digital]
         D --> F
-        G[Nonce] --> F
-        F --> H[Cifrado+Tag]
+        G[Nonce - Número Aleatorio] --> F
+        F --> H[Cifrado+Tag - Secreto Protegido]
     end
     
     subgraph "Capa 3: Transporte"
-        B --> I[Metadatos]
+        B --> I[Metadatos - Paquete Seguro]
         G --> I
         H --> I
-        I --> J[Mensaje]
+        I --> J[Mensaje Final]
     end
 ```
 
-## Estructura del Mensaje
+## Estructura del Mensaje (Técnico) / ¿Cómo se Guarda tu Secreto? (Amigable)
 
 ```mermaid
 flowchart LR
-    A[Sal 16B] --> B[Nonce 12B]
-    B --> C[Cifrado]
-    C --> D[Tag 16B]
+    A[Sal 16B - Sello de Seguridad] --> B[Nonce 12B - Número Aleatorio]
+    B --> C[Cifrado - Secreto Cifrado]
+    C --> D[Tag 16B - Etiqueta de Verificación]
 ```
 
-## Flujo de Cifrado
+## Flujo de Cifrado (Técnico) / Proceso de Guardado (Amigable)
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
-    participant A as App
+    participant T as Tú (Usuario)
+    participant A as Aplicación (App)
     participant C as CAOS
-    participant P as PBKDF2
-    participant G as GCM
+    participant P as PBKDF2 (Mezclador)
+    participant G as GCM (Guardián)
     
-    U->>A: Mensaje
-    A->>C: encrypt()
-    C->>C: Gen sal
-    C->>P: Deriva clave
-    P-->>C: Clave
-    C->>C: Gen nonce
-    C->>G: Cifra
-    G-->>C: Cifrado+Tag
-    C->>C: Compone
-    C-->>A: Resultado
-    A-->>U: Cifrado
+    T->>A: Escribes tu mensaje
+    A->>C: encrypt - Guardar mensaje
+    C->>C: Gen sal - Crear sello especial
+    C->>P: Deriva clave - Mezclar contraseña
+    P-->>C: Clave - Llave maestra
+    C->>C: Gen nonce - Crear número aleatorio
+    C->>G: Cifra - Proteger mensaje
+    G-->>C: Cifrado+Tag - Mensaje protegido
+    C->>C: Compone - Empaquetar todo
+    C-->>A: Resultado - Mensaje seguro
+    A-->>T: Cifrado - ¡Listo!
 ```
 
-## Flujo de Descifrado
+## Flujo de Descifrado (Técnico) / Proceso de Lectura (Amigable)
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
-    participant A as App
+    participant T as Tú (Usuario)
+    participant A as Aplicación (App)
     participant C as CAOS
-    participant P as PBKDF2
-    participant G as GCM
+    participant P as PBKDF2 (Mezclador)
+    participant G as GCM (Guardián)
     
-    U->>A: Cifrado
-    A->>C: decrypt()
-    C->>C: Extrae sal
-    C->>P: Deriva clave
-    P-->>C: Clave
-    C->>C: Extrae nonce
-    C->>C: Extrae datos
-    C->>G: Descifra
-    G-->>C: Original
-    C-->>A: Resultado
-    A-->>U: Mensaje
+    T->>A: Quieres leer tu mensaje
+    A->>C: decrypt - Abrir mensaje
+    C->>C: Extrae sal - Verificar sello
+    C->>P: Deriva clave - Mezclar contraseña
+    P-->>C: Clave - Llave maestra
+    C->>C: Extrae nonce - Extraer número aleatorio
+    C->>C: Extrae datos - Extraer mensaje
+    C->>G: Descifra - Verificar y abrir
+    G-->>C: Original - Mensaje original
+    C-->>A: Resultado - Tu mensaje
+    A-->>T: Mensaje - ¡Aquí está!
 ```
 
-## Comparación
+## Comparación de Sistemas (Técnico y Amigable)
 
 ```mermaid
 flowchart TD
-    subgraph "AES-CBC"
-        A1[Contraseña] --> B1[Hash]
+    subgraph "AES-CBC - Sistema Básico"
+        A1[Contraseña] --> B1[Hash - Llave Simple]
         B1 --> C1[Clave]
-        D1[Datos] --> E1[CBC]
+        D1[Datos] --> E1[CBC - Caja Básica]
         C1 --> E1
-        F1[IV] --> E1
-        E1 --> H1[Sin Auth]
+        F1[IV - Número] --> E1
+        E1 --> H1[Sin Auth - Sin Verificación]
     end
     
     subgraph "CAOS V4"
-        A2[Contraseña] --> B2[PBKDF2]
-        B2 --> C2[Clave]
-        D2[Datos] --> E2[GCM]
+        A2[Contraseña] --> B2[PBKDF2 - Mezclador Seguro]
+        B2 --> C2[Clave - Llave Maestra]
+        D2[Datos] --> E2[GCM - Caja Fuerte Digital]
         C2 --> E2
-        F2[Nonce] --> E2
-        E2 --> H2[Auth]
+        F2[Nonce - Número Aleatorio] --> E2
+        E2 --> G2[Auth - Con Verificación]
     end
 ```
 
-## Seguridad vs Rendimiento
+## Seguridad vs Rendimiento (Técnico) / Seguridad y Velocidad (Amigable)
 
-| Algoritmo | Rendimiento | Seguridad | Posición |
-|-----------|-------------|-----------|----------|
-| DES       | Muy bajo    | Muy baja  | Obsoleto |
-| 3DES      | Bajo        | Baja      | Obsoleto |
-| AES-ECB   | Alto        | Baja      | No recomendado |
-| AES-CBC   | Alto        | Media     | Básico |
-| RSA       | Bajo        | Alta      | Específico |
-| CBC+HMAC  | Medio       | Alta      | Recomendado |
-| Híbrido   | Medio       | Alta      | Específico |
-| CAOS V3   | Alto        | Alta      | Recomendado |
-| CAOS V4   | Alto        | Muy alta  | Óptimo |
+| Algoritmo (Técnico) | Sistema (Amigable) | Rendimiento/Velocidad | Seguridad | Posición/Recomendación |
+|---------------------|-------------------|----------------------|-----------|------------------------|
+| DES | Sistema Antiguo | Muy bajo/Lenta | Muy baja | Obsoleto/No usar |
+| 3DES | Sistema Antiguo Mejorado | Bajo/Lenta | Baja | Obsoleto/No usar |
+| AES-ECB | Sistema Básico Simple | Alto/Rápida | Baja | No recomendado/Para cosas simples |
+| AES-CBC | Sistema Básico | Alto/Rápida | Media | Básico/Para cosas simples |
+| RSA | Sistema Complejo | Bajo/Lenta | Alta | Específico/Para cosas muy importantes |
+| CBC+HMAC | Sistema Seguro | Medio/Rápida | Alta | Recomendado/Para la mayoría de usos |
+| Híbrido | Sistema Mixto | Medio/Rápida | Alta | Específico/Para usos especiales |
+| CAOS V3 | Sistema Avanzado | Alto/Muy Rápida | Alta | Recomendado/Para la mayoría de usos |
+| CAOS V4 | Sistema Óptimo | Alto/Muy Rápida | Muy alta | Óptimo/Para todo tipo de secretos |
 
-## Componentes
+## Componentes (Técnico) / Partes Principales (Amigable)
 
 ```mermaid
 classDiagram
     class CAOS {
-        +encrypt()
-        +decrypt()
+        +encrypt - guardar_mensaje()
+        +decrypt - leer_mensaje()
     }
     
     class PBKDF2 {
-        +derive()
+        +derive - crear_llave()
     }
     
     class GCM {
-        +encrypt()
-        +decrypt()
+        +encrypt - proteger()
+        +decrypt - verificar()
     }
     
     CAOS --> PBKDF2
     CAOS --> GCM
 ```
 
-## Tiempos de Operación
+## Tiempos de Operación (Técnico) / ¿Cuánto Tarda? (Amigable)
 
 ```mermaid
 gantt
-    title Tiempos
+    title Tiempos de Operación - Tiempo de Protección
     dateFormat X
     axisFormat %s
     
-    section CBC
-    100B  : 0, 1
-    1KB   : 0, 2
-    10KB  : 0, 5
+    section CBC - Sistema Básico
+    100B - Mensaje Corto  : 0, 1
+    1KB - Mensaje Medio   : 0, 2
+    10KB - Mensaje Largo  : 0, 5
     
-    section RSA
-    100B  : 0, 20
-    1KB   : 0, 80
-    10KB  : 0, 500
-    
-    section Híbrido
-    100B  : 0, 25
-    1KB   : 0, 35
-    10KB  : 0, 60
+    section RSA - Sistema Complejo
+    100B - Mensaje Corto  : 0, 20
+    1KB - Mensaje Medio   : 0, 80
+    10KB - Mensaje Largo  : 0, 500
     
     section CAOS V4
-    100B  : 0, 15
-    1KB   : 0, 25
-    10KB  : 0, 40
+    100B - Mensaje Corto  : 0, 15
+    1KB - Mensaje Medio   : 0, 25
+    10KB - Mensaje Largo  : 0, 40
 ```
 
-Estos diagramas muestran la arquitectura completa de CAOS V4, incluyendo su estructura de capas, flujos de operación y ventajas comparativas. 
+Estos diagramas muestran la arquitectura completa de CAOS V4, incluyendo su estructura de capas, flujos de operación y ventajas comparativas, presentados tanto en términos técnicos como en un lenguaje más amigable para facilitar la comprensión. 
