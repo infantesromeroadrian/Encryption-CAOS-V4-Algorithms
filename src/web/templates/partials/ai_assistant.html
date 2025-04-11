@@ -1,0 +1,77 @@
+<!-- Componente de Chat para Asistente de AI -->
+<div class="ai-assistant-container position-fixed bottom-0 end-0 p-3" style="z-index: 1000;">
+    <div class="card" style="width: 350px;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Asistente de Criptografía</h5>
+            <button type="button" class="btn-close" id="closeAssistant" aria-label="Cerrar asistente"></button>
+        </div>
+        <div class="card-body">
+            <div id="chatMessages" class="mb-3" style="height: 300px; overflow-y: auto;">
+                <!-- Los mensajes se insertarán aquí -->
+            </div>
+            <div class="input-group">
+                <input type="text" class="form-control" id="userMessage" placeholder="Escribe tu pregunta..." aria-label="Mensaje para el asistente">
+                <button class="btn btn-primary" id="sendMessage" aria-label="Enviar mensaje">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    const userMessage = document.getElementById('userMessage');
+    const sendButton = document.getElementById('sendMessage');
+    const closeButton = document.getElementById('closeAssistant');
+    const assistantContainer = document.querySelector('.ai-assistant-container');
+
+    // Función para agregar mensajes al chat
+    function addMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-2 ${isUser ? 'text-end' : 'text-start'}`;
+        messageDiv.innerHTML = `
+            <div class="p-2 rounded ${isUser ? 'bg-primary text-white' : 'bg-light'}" role="alert">
+                ${message}
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Enviar mensaje
+    sendButton.addEventListener('click', async function() {
+        const message = userMessage.value.trim();
+        if (message) {
+            addMessage(message, true);
+            userMessage.value = '';
+
+            try {
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                addMessage(data.response);
+            } catch (error) {
+                addMessage('Lo siento, hubo un error al procesar tu pregunta.');
+            }
+        }
+    });
+
+    // Cerrar el asistente
+    closeButton.addEventListener('click', function() {
+        assistantContainer.style.display = 'none';
+    });
+
+    // Permitir enviar mensaje con Enter
+    userMessage.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendButton.click();
+        }
+    });
+});
+</script> 

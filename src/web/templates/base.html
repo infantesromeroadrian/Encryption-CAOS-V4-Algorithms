@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Criptolab{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .nav-link {
+            font-weight: 500;
+        }
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem 0;
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Criptolab</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Encriptación Simétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Encriptación Asimétrica</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Encriptación Híbrida</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">Encriptación Personalizada</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <p>Criptolab - Laboratorio de Criptografía © 2023</p>
+            <p class="mb-0">Desarrollado con fines educativos.</p>
+        </div>
+    </footer>
+
+    <!-- Incluir el asistente de AI -->
+    {% include 'partials/ai_assistant.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
