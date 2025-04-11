@@ -18,16 +18,29 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Asegurarse de que las dependencias específicas para RAG estén instaladas
-RUN pip install --no-cache-dir requests python-dotenv
+RUN pip install --no-cache-dir requests python-dotenv markdown
 
 # Crear directorios necesarios
-RUN mkdir -p /app/src/web/templates /app/src/web/static /app/benchmark_results /app/src/rag
+RUN mkdir -p /app/src/web/templates /app/src/web/static /app/benchmark_results /app/src/rag /app/docs
 
-# Copiar el código fuente
-COPY . .
+# Copiar el código fuente completo
+COPY . /app/
 
-# Verificar que todos los módulos estén disponibles
-RUN python -c "import requests; import dotenv; print('Dependencias para RAG verificadas correctamente')"
+# Asegurar que el directorio docs existe y se ha copiado
+RUN echo "Verificando carpeta docs" && \
+    if [ -d "/app/docs" ]; then \
+        echo "Carpeta docs encontrada. Contenido:"; \
+        ls -la /app/docs; \
+    else \
+        echo "ERROR: Carpeta docs no encontrada"; \
+        exit 1; \
+    fi
+
+# Configurar el PYTHONPATH para incluir src y app
+ENV PYTHONPATH="${PYTHONPATH}:/app:/app/src"
+
+# Verificar que todas las dependencias están instaladas
+RUN python -c "import requests; import dotenv; import markdown; print('Dependencias para RAG verificadas correctamente')"
 
 # Exponer el puerto
 EXPOSE 5000

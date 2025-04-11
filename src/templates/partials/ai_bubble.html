@@ -1,0 +1,33 @@
+<!-- Burbuja flotante del Asistente IA -->
+<div id="ai-assistant-bubble" class="ai-assistant-bubble" title="Asistente IA">
+    <i class="fas fa-robot"></i>
+</div>
+
+<!-- Modal del Asistente IA -->
+<div id="ai-assistant-modal" class="ai-assistant-modal">
+    <div class="ai-assistant-header">
+        <h5><i class="fas fa-robot mr-2"></i> Asistente IA</h5>
+        <button id="ai-assistant-close" class="close-btn" aria-label="Cerrar">
+            <i class="fas fa-times"></i>
+        </button>
+        <span id="ai-status-indicator" class="ai-status-indicator">Verificando...</span>
+    </div>
+    <div id="ai-assistant-body" class="ai-assistant-body">
+        <div class="ai-message assistant">
+            <div class="message-content">
+                ¡Hola! Soy el asistente de CriptoLab. Puedo responder a tus preguntas sobre criptografía, algoritmos de cifrado, funciones hash, firmas digitales y más. ¿En qué puedo ayudarte hoy?
+            </div>
+        </div>
+    </div>
+    <div class="ai-assistant-footer">
+        <form id="ai-assistant-form">
+            <input type="text" id="ai-assistant-input" placeholder="Escribe tu pregunta..." autocomplete="off">
+            <button type="submit" title="Enviar mensaje">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Cargar scripts necesarios -->
+<script src="{{ url_for('static', filename='js/ai-assistant.js') }}"></script> 

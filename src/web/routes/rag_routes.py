@@ -22,7 +22,7 @@ rag_bp = Blueprint('rag', __name__, url_prefix='/rag')
 DEPENDENCIES_AVAILABLE = True
 try:
     # Importar el sistema RAG
-    from rag.rag_system import answer_crypto_question, rebuild_knowledge_base
+    from rag.rag_system import answer_crypto_question, rebuild_knowledge_base, reload_api_key
     import requests
     from dotenv import load_dotenv
 except ImportError as e:
@@ -113,6 +113,40 @@ def rebuild_kb():
         logger.error(f"Error al reconstruir base de conocimiento: {str(e)}")
         return jsonify({
             'error': 'Error al reconstruir la base de conocimiento',
+            'message': str(e)
+        }), 500
+
+@rag_bp.route('/reload_api_key', methods=['POST'])
+def reload_openai_key():
+    """
+    Endpoint para recargar la clave API de OpenAI después de actualizarla en el archivo .env.
+    """
+    if not DEPENDENCIES_AVAILABLE:
+        return jsonify({
+            "error": "Sistema RAG no disponible",
+            "message": "No se pudieron cargar las dependencias necesarias para el RAG.",
+            "fix": "Instale las dependencias con 'pip install requests python-dotenv'"
+        }), 503
+    
+    try:
+        # Comprobar credenciales (en un sistema real, implementaríamos autenticación)
+        data = request.get_json()
+        admin_key = data.get('admin_key', '')
+        
+        # Clave simple para este ejemplo (en un sistema real, usaríamos autenticación adecuada)
+        if admin_key != 'crypto_admin':
+            return jsonify({'error': 'No autorizado'}), 403
+            
+        # Recargar la clave API
+        logger.info("Solicitando recarga de la clave API de OpenAI")
+        result = reload_api_key()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error al recargar la clave API: {str(e)}")
+        return jsonify({
+            'error': 'Error al recargar la clave API',
             'message': str(e)
         }), 500
 

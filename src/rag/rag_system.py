@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 import inspect
 import requests
+import markdown
 from typing import Dict, List, Optional, Tuple, Union
 from dotenv import load_dotenv
 
@@ -104,6 +105,9 @@ class CryptoKnowledgeBase:
         
         # Añadir conocimiento general sobre criptografía
         self._add_general_knowledge()
+        
+        # Indexar documentos en la carpeta docs
+        self._index_documentation_files()
         
         # Guardar índice
         self.save_content()
@@ -354,6 +358,65 @@ class CryptoKnowledgeBase:
         
         return keywords
 
+    def _index_documentation_files(self):
+        """
+        Indexa archivos de documentación en Markdown y posiblemente PDF del directorio docs.
+        """
+        docs_path = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) / "docs"
+        
+        if not docs_path.exists():
+            logger.warning(f"El directorio de documentación {docs_path} no existe.")
+            return
+            
+        logger.info(f"Indexando documentos de {docs_path}")
+        
+        # Indexar archivos Markdown
+        for md_file in docs_path.glob("*.md"):
+            try:
+                # Leer contenido del archivo
+                with open(md_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Convertir Markdown a texto plano 
+                # (eliminamos las etiquetas HTML pero mantenemos la estructura)
+                html_content = markdown.markdown(content)
+                text_content = re.sub(r'<[^>]+>', '', html_content)
+                
+                # Obtener título del documento (primera línea con # o nombre del archivo)
+                title = md_file.stem.replace('_', ' ')
+                match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+                if match:
+                    title = match.group(1)
+                    
+                # Generar metadatos para la documentación
+                doc_name = md_file.stem
+                source = f"docs.{doc_name}"
+                
+                # Determinar categoría basada en el nombre del archivo
+                category = "Documentación General"
+                if "caos" in doc_name.lower() or "v3" in doc_name.lower() or "v4" in doc_name.lower():
+                    category = "Documentación CAOS"
+                elif "informe" in doc_name.lower() or "tecnico" in doc_name.lower():
+                    category = "Informes Técnicos"
+                elif "presentacion" in doc_name.lower():
+                    category = "Presentaciones"
+                
+                # Añadir al índice
+                self.documents.append({
+                    'content': f"Documento {title}:\n\n{text_content}",
+                    'source': source,
+                    'type': 'documentation',
+                    'category': category
+                })
+                
+                logger.info(f"Documento indexado: {md_file.name}")
+                
+            except Exception as e:
+                logger.error(f"Error al indexar el documento {md_file}: {str(e)}")
+        
+        # TODO: En una implementación futura, podríamos añadir soporte para indexar PDFs
+        # utilizando una biblioteca como PyPDF2 o pdfminer.six
+
 class CryptoRAG:
     """
     Sistema RAG para responder preguntas sobre criptografía utilizando
@@ -361,8 +424,21 @@ class CryptoRAG:
     """
     def __init__(self):
         """Inicializa el sistema RAG."""
+        # Recargar variables de entorno para asegurar que tenemos los valores más recientes
+        load_dotenv()
+        
+        # Inicializar la base de conocimiento
         self.kb = CryptoKnowledgeBase()
+        
+        # Obtener la clave API más reciente
         self.openai_api_key = os.getenv("OPENAI_APIKEY")
+        
+        # Verificar si tenemos una clave API válida
+        if not self.openai_api_key:
+            logger.error("No se encontró la clave API de OpenAI. Las consultas al LLM no funcionarán.")
+        else:
+            # Solo mostrar los primeros caracteres por seguridad
+            logger.info(f"CryptoRAG inicializado con clave API que comienza con {self.openai_api_key[:4]}...")
         
     def answer_question(self, question: str) -> Dict:
         """
@@ -410,6 +486,16 @@ class CryptoRAG:
             Respuesta generada por OpenAI
         """
         try:
+            # Verificar que la clave API está disponible
+            if not self.openai_api_key:
+                logger.error("No se encontró la clave API de OpenAI en las variables de entorno")
+                return "Error: No se ha configurado la clave API de OpenAI. Por favor, configura la variable de entorno OPENAI_APIKEY."
+                
+            # Imprimir primeros caracteres de la clave para depuración
+            # (No mostrar la clave completa por seguridad)
+            api_key_start = self.openai_api_key[:4] if self.openai_api_key else "None"
+            logger.info(f"Utilizando clave API que comienza con: {api_key_start}...")
+            
             # Configurar parámetros para la API de OpenAI
             headers = {
                 "Content-Type": "application/json",
@@ -435,6 +521,9 @@ class CryptoRAG:
                 "max_tokens": 500
             }
             
+            # Registrar que estamos enviando la solicitud
+            logger.info(f"Enviando solicitud a la API de OpenAI para la pregunta: {question[:50]}...")
+            
             # Realizar la solicitud a la API de OpenAI
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -442,7 +531,15 @@ class CryptoRAG:
                 json=data
             )
             
-            # Verificar el código de estado
+            # Verificar el código de estado y registrar respuesta para depuración
+            logger.info(f"Código de estado de la respuesta: {response.status_code}")
+            
+            # Si hubo un error, registrarlo detalladamente
+            if response.status_code != 200:
+                error_info = response.json() if response.text else "No se pudo obtener información del error"
+                logger.error(f"Error en la respuesta de OpenAI: {error_info}")
+                return f"Error al comunicarse con OpenAI (Código {response.status_code}). Por favor, verifica que tu clave API es válida y está activa."
+            
             response.raise_for_status()
             
             # Extraer la respuesta
@@ -451,9 +548,15 @@ class CryptoRAG:
             
             return generated_text
             
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error de conexión con la API de OpenAI: {str(e)}")
+            return "Error de conexión con la API de OpenAI. Por favor, verifica tu conexión a internet y que la API esté disponible."
+        except KeyError as e:
+            logger.error(f"Error en la estructura de respuesta de OpenAI: {str(e)}")
+            return "Error en el formato de respuesta de OpenAI. La estructura de la respuesta no es la esperada."
         except Exception as e:
-            logger.error(f"Error al generar respuesta con OpenAI: {str(e)}")
-            return "Lo siento, ha ocurrido un error al generar la respuesta."
+            logger.error(f"Error al generar respuesta con OpenAI: {str(e)}", exc_info=True)
+            return f"Lo siento, ha ocurrido un error al generar la respuesta: {str(e)}"
 
 # Instancia del sistema RAG disponible globalmente
 crypto_rag = CryptoRAG()
@@ -475,4 +578,20 @@ def rebuild_knowledge_base():
     global crypto_rag
     crypto_rag = CryptoRAG()
     crypto_rag.kb.build_index()
-    return {"status": "success", "message": "Base de conocimiento reconstruida correctamente."} 
+    return {"status": "success", "message": "Base de conocimiento reconstruida correctamente."}
+
+def reload_api_key():
+    """
+    Recarga la clave API de OpenAI.
+    Útil cuando se ha actualizado el archivo .env
+    """
+    global crypto_rag
+    # Recargar variables de entorno
+    load_dotenv()
+    # Crear una nueva instancia del RAG para que tome la nueva clave
+    crypto_rag = CryptoRAG()
+    api_key = os.getenv("OPENAI_APIKEY")
+    if api_key:
+        return {"status": "success", "message": f"Clave API recargada correctamente (comienza con {api_key[:4]}...)."}
+    else:
+        return {"status": "error", "message": "No se encontró la clave API de OpenAI después de la recarga."} 
