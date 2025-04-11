@@ -301,7 +301,7 @@ class Benchmark:
         plt.grid(True, axis='y')
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig('security_metrics.png')
+        plt.savefig('src/static/security_metrics.png')
         plt.close()
 
     def print_security_table(self):

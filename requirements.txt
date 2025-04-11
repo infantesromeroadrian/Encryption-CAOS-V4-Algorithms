@@ -1,15 +1,24 @@
 # Dependencias principales
-flask==2.3.3
+Flask==2.2.3
+Werkzeug==2.2.3
+Jinja2==3.1.2
+cryptography==41.0.3
 pycryptodome==3.19.0
-cryptography==41.0.4
-bcrypt==4.0.1
+tabulate==0.9.0
+matplotlib==3.7.1
+tqdm==4.65.0
+requests==2.31.0
+
+# Utilidades
+python-dotenv==1.0.0
+gunicorn==21.2.0
+
+# Para la visualización
+plotly==5.18.0
+numpy==1.24.3
 
 # Visualización y análisis
-matplotlib==3.7.2
-numpy==1.24.3
-tabulate==0.9.0
-plotly>=5.12.0
-pandas>=1.5.0
+bcrypt==4.0.1
 
 # API y backend
 fastapi>=0.68.0
@@ -20,5 +29,4 @@ pydantic-settings>=2.0.0
 email-validator>=2.0.0
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
-python-multipart>=0.0.5
-python-dotenv>=0.19.0 
+python-multipart>=0.0.5 

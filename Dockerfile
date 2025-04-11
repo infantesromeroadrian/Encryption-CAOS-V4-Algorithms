@@ -17,11 +17,17 @@ COPY requirements.txt .
 # Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Asegurarse de que las dependencias específicas para RAG estén instaladas
+RUN pip install --no-cache-dir requests python-dotenv
+
 # Crear directorios necesarios
-RUN mkdir -p /app/src/web/templates /app/src/web/static /app/benchmark_results
+RUN mkdir -p /app/src/web/templates /app/src/web/static /app/benchmark_results /app/src/rag
 
 # Copiar el código fuente
 COPY . .
+
+# Verificar que todos los módulos estén disponibles
+RUN python -c "import requests; import dotenv; print('Dependencias para RAG verificadas correctamente')"
 
 # Exponer el puerto
 EXPOSE 5000

@@ -9,7 +9,8 @@ híbridos y personalizados de encriptación.
 
 import os
 import sys
-from flask import Flask, session
+import logging
+from flask import Flask, session, jsonify
 
 # Asegurar que src está en el path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,9 +18,15 @@ src_dir = os.path.dirname(current_dir)
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
+# Configurar logger
+logger = logging.getLogger(__name__)
+
 # Importaciones para los manejadores de errores y utilidades
 from .utils import error_handlers
-from .routes import register_routes
+try:
+    from .routes import register_routes
+except ImportError as e:
+    logger.error(f"Error al importar el módulo de rutas: {str(e)}")
 
 # Función para crear la aplicación Flask
 def create_app(testing=False):
@@ -51,7 +58,22 @@ def create_app(testing=False):
     error_handlers.register_error_handlers(app)
     
     # Registrar todas las rutas
-    register_routes(app)
+    try:
+        register_routes(app)
+    except NameError:
+        # Si register_routes no está definido debido a un error de importación
+        logger.warning("No se pudieron registrar las rutas debido a un error de importación")
+        
+        # Añadir una ruta de información para indicar el problema
+        @app.route('/status')
+        def status():
+            return jsonify({
+                "status": "limited",
+                "message": "Algunas funcionalidades no están disponibles debido a dependencias faltantes.",
+                "missing_features": ["RAG"]
+            })
+    except Exception as e:
+        logger.error(f"Error al registrar las rutas: {str(e)}")
     
     # Asegurarse de que los directorios estáticos y de plantillas existan
     for d in ['static', 'templates']:

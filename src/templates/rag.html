@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CriptoLab - Asistente de Criptografía</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        .chat-container {
+            height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #d1ecf1;
+            border-left: 4px solid #0c5460;
+        }
+        .assistant-message {
+            background-color: #e2e3e5;
+            border-left: 4px solid #41464b;
+        }
+        .source-item {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            background-color: #e2e3e5;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #41464b;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 3px;
+            animation: typing 1s infinite;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        .code-block {
+            background-color: #f6f8fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .hljs {
+            background: #f6f8fa;
+            border-radius: 3px;
+        }
+        #status-indicator {
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menú lateral -->
+            <div class="col-md-2 sidebar">
+                <div class="logo text-center my-4">
+                    <h4>CriptoLab</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/symmetric">Cifrado Simétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/asymmetric">Cifrado Asimétrico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hybrid">Cifrado Híbrido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/custom">CAOS V4.0</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hash">Funciones Hash</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/digital_signature">Firmas Digitales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/benchmark">Benchmark</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/rag">Asistente IA</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Contenido principal -->
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Asistente de Criptografía con IA</h1>
+                </div>
+                
+                <!-- Indicador de estado del sistema -->
+                <div id="status-indicator" class="alert alert-info">
+                    <i class="fas fa-sync fa-spin mr-2"></i> Verificando disponibilidad del sistema...
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Asistente Inteligente</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Este asistente utiliza tecnología RAG (Retrieval-Augmented Generation) para responder a tus preguntas sobre criptografía, basándose en el conocimiento específico de CriptoLab.</p>
+                        <p>Puedes preguntar sobre algoritmos, conceptos, implementaciones o ejemplos relacionados con la criptografía que se muestran en esta aplicación.</p>
+                    </div>
+                </div>
+                
+                <!-- Contenedor de chat -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-robot mr-2"></i> Conversación</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="chat-container" class="chat-container mb-3">
+                            <div class="assistant-message message">
+                                <p>¡Hola! Soy el asistente de CriptoLab. Puedo responder a tus preguntas sobre criptografía, algoritmos de cifrado, funciones hash, firmas digitales y más. ¿En qué puedo ayudarte hoy?</p>
+                            </div>
+                            <div class="typing-indicator" id="typing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <p class="ml-2 mb-0">El asistente está escribiendo...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Formulario de entrada -->
+                        <form id="question-form">
+                            <div class="input-group">
+                                <input type="text" id="user-question" class="form-control" placeholder="Escribe tu pregunta sobre criptografía...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit" id="submit-button">
+                                        <i class="fas fa-paper-plane"></i> Enviar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Ejemplos de preguntas -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Preguntas sugeridas</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Aquí hay algunas preguntas que puedes hacer:</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-group">
+                                    <li class="list-group-item suggested-question" role="button">¿Cuál es la diferencia entre cifrado simétrico y asimétrico?</li>
+                                    <li class="list-group-item suggested-question" role="button">¿Cómo funciona el algoritmo AES?</li>
+                                    <li class="list-group-item suggested-question" role="button">¿Qué es una firma digital y para qué sirve?</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-group">
+                                    <li class="list-group-item suggested-question" role="button">¿Qué ventajas tiene la criptografía híbrida?</li>
+                                    <li class="list-group-item suggested-question" role="button">¿Cómo funciona el cifrado personalizado CAOS?</li>
+                                    <li class="list-group-item suggested-question" role="button">¿Por qué es importante el salting en el hash de contraseñas?</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chat-container');
+            const questionForm = document.getElementById('question-form');
+            const userQuestion = document.getElementById('user-question');
+            const typingIndicator = document.getElementById('typing-indicator');
+            const statusIndicator = document.getElementById('status-indicator');
+            const submitButton = document.getElementById('submit-button');
+            
+            // Verificar el estado del sistema RAG
+            checkRAGStatus();
+            
+            // Configurar marked para highlight.js
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    return hljs.highlight(code, { language }).value;
+                }
+            });
+            
+            // Función para verificar el estado del sistema RAG
+            async function checkRAGStatus() {
+                statusIndicator.style.display = 'block';
+                
+                try {
+                    const response = await fetch('/rag/status');
+                    const data = await response.json();
+                    
+                    if (data.available) {
+                        // El sistema está disponible
+                        statusIndicator.className = 'alert alert-success';
+                        statusIndicator.innerHTML = '<i class="fas fa-check-circle mr-2"></i> ' + data.message;
+                        submitButton.disabled = false;
+                        
+                        // Ocultar después de 3 segundos
+                        setTimeout(() => {
+                            statusIndicator.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        // El sistema no está disponible
+                        statusIndicator.className = 'alert alert-warning';
+                        statusIndicator.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> ' + data.message + 
+                            ' <br><small>El asistente funcionará en modo limitado. Algunas respuestas pueden no ser precisas.</small>';
+                        submitButton.disabled = false;
+                    }
+                } catch (error) {
+                    // Error al verificar el estado
+                    statusIndicator.className = 'alert alert-danger';
+                    statusIndicator.innerHTML = '<i class="fas fa-times-circle mr-2"></i> Error al verificar el estado del sistema: ' + error.message;
+                    submitButton.disabled = false;
+                }
+            }
+            
+            // Función para agregar un mensaje al chat
+            function addMessage(message, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isUser ? 'user-message message' : 'assistant-message message';
+                
+                // Si es un mensaje del usuario, simplemente mostramos el texto
+                if (isUser) {
+                    messageDiv.innerHTML = `<p>${message}</p>`;
+                } else {
+                    // Si es del asistente, procesamos el mensaje para formatear código y markdown
+                    const contentHtml = marked.parse(message.content || message);
+                    
+                    messageDiv.innerHTML = `
+                        <div>${contentHtml}</div>
+                        ${message.sources ? '<div class="source-item"><strong>Fuentes:</strong></div>' : ''}
+                        <div class="sources-list"></div>
+                    `;
+                    
+                    // Añadir fuentes si existen
+                    if (message.sources && message.sources.length > 0) {
+                        const sourcesList = messageDiv.querySelector('.sources-list');
+                        message.sources.forEach(source => {
+                            const sourceItem = document.createElement('div');
+                            sourceItem.className = 'source-item';
+                            sourceItem.textContent = `${source.source} (${source.type}) - ${source.category}`;
+                            sourcesList.appendChild(sourceItem);
+                        });
+                    }
+                }
+                
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Manejar la sugerencia de preguntas
+            document.querySelectorAll('.suggested-question').forEach(item => {
+                item.addEventListener('click', function() {
+                    const question = this.textContent;
+                    userQuestion.value = question;
+                    // Simular envío del formulario
+                    const event = new Event('submit');
+                    questionForm.dispatchEvent(event);
+                });
+            });
+            
+            // Manejar el envío del formulario
+            questionForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const question = userQuestion.value.trim();
+                if (!question) return;
+                
+                // Añadir la pregunta del usuario al chat
+                addMessage(question, true);
+                userQuestion.value = '';
+                
+                // Mostrar indicador de escritura
+                typingIndicator.style.display = 'flex';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                try {
+                    // Enviar la pregunta al servidor
+                    const response = await fetch('/rag/query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ question })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Ocultar indicador de escritura
+                    typingIndicator.style.display = 'none';
+                    
+                    if (response.ok) {
+                        // Añadir respuesta del asistente
+                        if (data.answer) {
+                            // Si tenemos una respuesta generada por OpenAI
+                            addMessage({
+                                content: data.answer,
+                                sources: data.sources
+                            });
+                        } else if (data.error) {
+                            // Si hay un error específico
+                            addMessage({
+                                content: `**Error:** ${data.message || data.error}`,
+                                sources: []
+                            });
+                        } else {
+                            // Mensaje de fallback si no hay respuesta de OpenAI
+                            const fallbackMessage = "Lo siento, no puedo generar una respuesta en este momento. " +
+                                                "Podría ser que la API de OpenAI no esté disponible o que no se haya " +
+                                                "encontrado información relevante para tu pregunta. Por favor, intenta " +
+                                                "con otra pregunta o contacta al administrador del sistema.";
+                            addMessage({
+                                content: fallbackMessage,
+                                sources: data.sources || []
+                            });
+                        }
+                    } else {
+                        // Error en la petición
+                        addMessage({
+                            content: `**Error:** ${data.error || data.message || 'Ha ocurrido un error al procesar tu pregunta.'}`,
+                            sources: []
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    typingIndicator.style.display = 'none';
+                    addMessage({
+                        content: `**Error de conexión:** ${error.message}. Por favor, inténtalo de nuevo más tarde.`,
+                        sources: []
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
